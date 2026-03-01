@@ -15,18 +15,6 @@ A secure and reliable background monitoring tool that tracks friend online statu
 
 ---
 
-## 技术栈 | Tech Stack
-
-| 层级 | 技术 | 说明 | Layer | Technology | Description |
-|------|------|------|-------|------------|-------------|
-| **后端** | Node.js + Express | RESTful API 服务 | **Backend** | Node.js + Express | RESTful API service |
-| **数据库** | SQLite3 | 轻量级本地数据存储 | **Database** | SQLite3 | Lightweight local data storage |
-| **前端** | 原生 HTML + CSS + JS | 响应式 Web 界面 | **Frontend** | Native HTML + CSS + JS | Responsive Web UI |
-| **定时任务** | node-cron | 周期性状态检查 | **Scheduler** | node-cron | Periodic status checks |
-| **邮件服务** | Nodemailer | SMTP 邮件发送 | **Email** | Nodemailer | SMTP email sending |
-| **HTTP 客户端** | Axios + tough-cookie | VRChat API 通信 | **HTTP Client** | Axios + tough-cookie | VRChat API communication |
-
----
 
 ## 核心功能 | Core Features
 

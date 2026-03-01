@@ -77,6 +77,9 @@ services:
     volumes:
       # 数据持久化存储
       - ./data:/app/data
+    environment:
+      - TZ=Asia/Shanghai
+    command: sh -c "apk add --no-cache tzdata && node server.js"
     networks:
       - vrc-network
 
@@ -107,6 +110,9 @@ services:
     volumes:
       # 数据持久化存储
       - ./data:/app/data
+    environment:
+      - TZ=Asia/Shanghai
+    command: sh -c "apk add --no-cache tzdata && node server.js"
     networks:
       - vrc-network
 

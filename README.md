@@ -8,9 +8,6 @@
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat&logo=docker&logoColor=white)](https://www.docker.com/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-<p align="center">
-  <a href="./README.md">中文</a> | <a href="./README_EN.md">English</a>
-</p>
 
 安全可靠的后台监控工具，实时追踪好友在线状态变化
 

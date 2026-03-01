@@ -84,6 +84,36 @@ networks:
   vrc-network:
     driver: bridge
 ```
+##### 选项 2：使用国内镜像（推荐，速度更快）
+
+1. **创建项目目录并进入**
+
+```bash
+mkdir vrc-notifier && cd vrc-notifier
+```
+
+2. **创建 `docker-compose.yml` 文件**
+
+```yaml
+version: '3.8'
+
+services:
+  vrc-notifier:
+    image: crpi-tj1a3tjj9c5r6p8g.cn-hangzhou.personal.cr.aliyuncs.com/vrc-notifier/vrc-notifier:latest
+    container_name: vrc-notifier
+    restart: unless-stopped
+    ports:
+      - "5270:5270"
+    volumes:
+      # 数据持久化存储
+      - ./data:/app/data
+    networks:
+      - vrc-network
+
+networks:
+  vrc-network:
+    driver: bridge
+```
 
 3. **启动服务**
 

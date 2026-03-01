@@ -1,0 +1,955 @@
+// i18n 国际化配置
+const i18n = {
+  // 当前语言
+  currentLang: localStorage.getItem('vrc-lang') || 'zh',
+
+  // 翻译数据
+  translations: {
+    zh: {
+      // 通用
+      'app.name': 'VRC-Notifier',
+      'app.title': 'vrc-notifier',
+      'loading': '加载中...',
+      'save': '保存',
+      'cancel': '取消',
+      'confirm': '确定',
+      'close': '关闭',
+      'refresh': '刷新',
+      'settings': '设置',
+      'logout': '退出',
+      'login': '登录',
+      'email': '邮箱',
+      'password': '密码',
+      'username': '用户名',
+
+      // 访问验证
+      'access.verify.title': '访问验证',
+      'access.verify.desc': '请输入访问密钥，密钥已在终端生成，可登录之后自定义关闭',
+      'access.verify.key': '访问密钥',
+      'access.verify.placeholder': '请输入访问密钥',
+      'access.verify.btn': '验证并继续',
+      'access.verify.success': '验证成功',
+      'access.verify.error': '访问密钥错误',
+      'access.verify.required': '请输入访问密钥',
+
+      // 登录
+      'login.title': '登录 VRChat',
+      'login.username.placeholder': 'VRChat 用户名/邮箱',
+      'login.password.placeholder': '密码',
+      'login.code': '验证码',
+      'login.code.placeholder': '邮箱验证码',
+      'login.sendCode': '发送验证码',
+      'login.sending': '发送中...',
+      'login.verify': '登录',
+      'login.verifying': '登录中...',
+      'login.success': '登录成功！',
+      'login.error.empty': '请输入用户名和密码',
+      'login.error.network': '网络连接失败，请检查网络',
+      'login.rememberMe': '记住我（下次自动登录）',
+      'login.hint.title': '使用提示',
+      'login.hint.content': '【重要】为防止登录掉线，建议将本工具部署在与游戏相同的网络环境下（同一IP地址）。如果您需要在玩游戏时使用本工具，请先启动游戏，再启动本工具，这样可以保持同一会话。如果工具的登录会话被检测到在其他IP登录（如启动游戏），工具将自动停止监控。',
+
+      // 退出
+      'logout.confirm': '确定要退出登录吗？',
+      'logout.clear.confirm': '[!] 警告：此操作将登出账号！\n\n如需清除所有本地数据，请手动删除程序目录下的 data 文件夹。\n\n确定要登出吗？',
+      'logout.clear.success': '[OK] 已登出\n\n如需清除所有本地数据，请手动删除程序目录下的 data 文件夹。\n\n操作步骤：\n1. 关闭本程序\n2. 删除程序目录下的 data 文件夹\n3. 重新启动程序\n\n这样即可完全重置所有数据。',
+      'logout.clear.error': '[X] 登出失败，请稍后重试',
+
+      // 标签页
+      'tab.friends': '好友列表',
+      'tab.settings': 'SMTP与设置',
+      'tab.gotify': 'Gotify通知设置',
+      'tab.qmsg': 'QQ推送设置',
+
+      // 公告栏
+      'announcement.title': '使用须知',
+      'announcement.api.title': '[API] 请求逻辑',
+      'announcement.api.login': '登录时：仅获取好友列表（2次API），不获取世界信息',
+      'announcement.api.refresh': '手动刷新：获取好友列表和好友的状态信息',
+      'announcement.api.monitor': '监控检查：每30秒检查，仅获取被监控好友的世界信息（标准模式下）',
+      'announcement.api.cooldown': '冷却期：登录/刷新后60秒内暂停所有api请求，防止冲突',
+      'announcement.tips.title': '[!] 重要提示',
+      'announcement.tips.limit': '最多监控5个好友，仅被监控好友会获取世界信息',
+      'announcement.tips.vrcx': 'VRCX兼容性：如使用VRCX可能产生API冲突，但本工具保留大量API冗余，不会影响VRCX正常使用',
+      'announcement.tips.reset': '如遇问题，点击"退出并清除数据"按钮，后手动删除data里的文件',
+      'announcement.disclaimer': '免责声明：本应用已尽可能规避API使用问题，且使用底层保护，如用户不特意调用API，不会出现账号封禁问题。若账号出现封禁，与本工具无关。（开源社区声明）',
+      'announcement.footer.author': '作者: 闪耀金金/ShanyJin',
+      'announcement.footer.website': '作者官网',
+      'announcement.footer.community': 'VRChat社区',
+      'announcement.footer.tool': '工具介绍',
+
+      // 仅监控状态模式开关
+      'statusOnly.toggle': '仅监控状态模式',
+      'statusOnly.help': '了解仅监控状态模式',
+      'statusOnly.hint.enabled': '已开启"仅监控状态"模式：将不再监控好友世界状态，但监控数量不受限制',
+      'statusOnly.hint.disabled': '如遇问题，可点击"退出并清除数据"按钮清除本地缓存后重新登录',
+
+      // 用户信息
+      'user.status.unknown': '未知状态',
+      'user.logout': '退出',
+      'user.logoutClear': '退出并清除数据',
+      'user.clear.hint': '如遇问题，可点击"退出并清除数据"按钮清除本地缓存后重新登录',
+
+      // 好友列表控制
+      'friends.unmonitorAll': '全部关闭',
+      'friends.refresh': '刷新',
+      'friends.refresh.hint': '请勿频繁点击',
+      'friends.refresh.cooldown': '冷却中：',
+      'friends.refresh.cooldown.suffix': '秒后可用',
+      'friends.refresh.success': '刷新成功！',
+      'friends.monitor.limit': '最多监控5个好友，仅监控好友会刷新状态',
+      'friends.about': '关于',
+      'friends.view.toggle': '切换视图',
+
+      // 关于面板
+      'about.title': '[功能说明]',
+      'about.desc': '本工具是后台自动监控工具，用于在后台静默监控您的好友状态变化，并通过邮件和平台通知您。',
+      'about.feature1': '本工具不会在前台实时显示好友状态（如有此需求，请使用 VRCX）',
+      'about.feature2': '开启监控后，程序会在后台自动运行，当好友上线/下线/切换世界时发送通知',
+      'about.feature3': '您无需保持网页打开，只需保持后端程序运行即可',
+      'about.feature4': '建议将本程序部署在服务器或长期运行的设备上',
+      'about.api.title': '[API] 请求逻辑说明',
+      'about.api.login': '登录时：仅获取在线和离线好友列表（2次API请求），不获取世界信息',
+      'about.api.refresh': '手动刷新时：获取好友列表信息，刷新后60秒内暂停监控',
+      'about.api.monitor': '监控检查时：每30秒检查一次，仅获取被监控好友的世界信息（轮询机制，每10秒一个好友）',
+      'about.api.cooldown': '冷却期：登录或刷新后60秒内暂停所有监控，防止API冲突',
+      'about.security.title': '[安全] API保护机制',
+      'about.security.desc': '本工具内置多重API保护机制，确保您的账号安全：',
+      'about.security.rate': '请求频率限制：严格遵循VRChat API规范，用户资料≤1次/分钟，好友状态≤2次/分钟，世界信息≤6次/分钟',
+      'about.security.pause': '自动限流保护：当检测到请求频率过高时，系统自动暂停60秒，防止触发官方限制',
+      'about.security.alert': '实时弹窗提醒：触发限流保护时，会显示红色弹窗提醒用户',
+      'about.security.conservative': '保守策略：所有API请求频率均低于官方限制，留有充足安全余量',
+      'about.security.safe': '只要正常使用，不疯狂调用API，不会出现账号封禁问题',
+      'about.tips.title': '[!] 使用提示',
+      'about.tips.limit': '在标准模式下，最多可监控5个好友，只有被监控的好友才会获取世界信息',
+      'about.tips.reset': '如遇问题，可使用"退出并清除数据"按钮清除所有本地数据后重新登录',
+      'about.tips.frequent': '请勿频繁刷新好友列表，避免触发API限流',
+      'about.tips.vrcx': '与VRCX同时使用时可能产生API冲突，但本工具已预留大量冗余，不会影响VRCX正常使用',
+      'about.clear.title': '[X] 退出并清除数据',
+      'about.clear.desc': '点击"退出并清除数据"按钮将：',
+      'about.clear.action1': '登出当前账号',
+      'about.clear.action2': '提示您手动删除 data 文件夹以清除所有数据',
+      'about.clear.usage': '适用于：数据异常、缓存问题、需要重置所有设置时',
+      'about.footer.name': 'VRC-Notifier',
+      'about.footer.author': '作者: 闪耀金金/ShanyJin',
+      'about.footer.website': '作者官网',
+      'about.footer.community': 'VRChat社区',
+      'about.footer.tool': '工具介绍',
+
+      // 仅监控状态模式
+      'statusOnly.title': '[?] 什么是"仅监控状态"模式？',
+      'statusOnly.desc': '这是一个简化版监控模式，只关注好友的在线/离线状态，不关注他们在哪个世界。',
+      'statusOnly.why.title': '[+] 为什么要使用这个模式？',
+      'statusOnly.why.friends': '好友数量多：',
+      'statusOnly.why.friends.desc': '标准模式最多只能监控5个好友，此模式可以监控所有好友',
+      'statusOnly.why.api': '节省API配额：',
+      'statusOnly.why.api.desc': '不查询世界信息，API调用从8次/分钟降至2次/分钟',
+      'statusOnly.why.simple': '简化通知：',
+      'statusOnly.why.simple.desc': '只关心好友是否在线和状态，不关心他们在哪个房间',
+      'statusOnly.why.load': '降低服务器负载：',
+      'statusOnly.why.load.desc': '减少API请求，对服务器更友好',
+      'statusOnly.compare.title': '[↻] 两种模式的区别',
+      'statusOnly.compare.feature': '功能',
+      'statusOnly.compare.standard': '标准模式',
+      'statusOnly.compare.statusOnly': '仅状态模式',
+      'statusOnly.compare.monitorCount': '监控数量',
+      'statusOnly.compare.monitorCount.standard': '最多5个',
+      'statusOnly.compare.monitorCount.statusOnly': '无限制',
+      'statusOnly.compare.onlineStatus': '在线状态',
+      'statusOnly.compare.onlineStatus.support': '支持',
+      'statusOnly.compare.worldChange': '世界变化',
+      'statusOnly.compare.worldChange.no': '不支持',
+      'statusOnly.compare.apiCalls': 'API调用',
+      'statusOnly.compare.apiCalls.standard': '8次/分钟',
+      'statusOnly.compare.apiCalls.statusOnly': '2次/分钟',
+      'statusOnly.how.title': '[!] 如何使用？',
+      'statusOnly.how.step1': '点击"仅监控状态"开关开启此模式',
+      'statusOnly.how.step2': '确认切换（会自动关闭当前所有监控的好友）',
+      'statusOnly.how.step3': '点击"一键关闭监控全部好友"按钮关闭所有好友',
+      'statusOnly.how.step4': '完成！您将收到所有好友的上线/下线通知',
+      'statusOnly.warning.title': '[⚠] 注意事项',
+      'statusOnly.warning.reset': '切换模式时会自动关闭所有监控的好友，需要重新选择',
+      'statusOnly.warning.noWorld': '此模式下不会收到世界变化通知（如好友切换房间）',
+      'statusOnly.warning.useStandard': '如果想监控特定好友的世界变化，请使用标准模式',
+      'statusOnly.warning.switch': '两种模式可以随时切换，但每次切换都会重置监控列表',
+      'statusOnly.close': '我知道了',
+
+      // 好友卡片
+      'friend.monitor.enable': '开启监控',
+      'friend.monitor.disable': '关闭监控',
+      'friend.settings': '设置',
+      'friend.status.offline': 'Offline',
+      'friend.status.active': 'Active',
+      'friend.status.joinme': 'Join Me',
+      'friend.status.askme': 'Ask Me',
+      'friend.status.busy': 'Busy',
+      'friend.monitor.max': '您最多只能监控5个好友。请先关闭一些好友的监控后再开启。',
+      'friend.monitor.fail': '更新监控状态失败',
+
+      // 好友设置弹窗
+      'friend.modal.title': '好友通知设置',
+      'friend.modal.notifyOnline': '上线通知',
+      'friend.modal.notifyOffline': '下线通知',
+      'friend.modal.notifyStatus': '状态改变通知',
+      'friend.modal.notifyWorld': '世界改变通知',
+      'friend.modal.saved': '设置已保存',
+      'friend.modal.saveFail': '保存失败',
+
+      // 工具设置
+      'settings.tool.title': '工具设置',
+      'settings.accessKey.enable': '启用访问密钥保护',
+      'settings.accessKey.desc': '开启后，访问网页时需要先输入访问密钥，公网部署建议开启，本地部署可选择性关闭。',
+      'settings.accessKey.current': '当前访问密钥（记得保存）',
+      'settings.accessKey.copy': '复制',
+      'settings.accessKey.regenerate': '重新生成',
+      'settings.accessKey.warning': '警告：重新生成密钥后，之前保存的密钥将失效，需要重新输入！',
+      'settings.accessKey.copied': '密钥已复制到剪贴板',
+      'settings.accessKey.enabled': '访问密钥已启用',
+      'settings.accessKey.disabled': '访问密钥已禁用',
+
+      // 邮件设置
+      'settings.email.title': '邮件通知配置',
+      'settings.monitor.enable': '启用好友状态监控',
+      'settings.notifyEmail': '接收通知的邮箱',
+      'settings.notifyEmail.placeholder': 'example@email.com',
+
+      // SMTP设置
+      'settings.smtp.title': 'SMTP 服务器配置',
+      'settings.smtp.host': 'SMTP 服务器地址',
+      'settings.smtp.host.placeholder': 'smtp.qq.com',
+      'settings.smtp.port': '端口',
+      'settings.smtp.port.placeholder': '465',
+      'settings.smtp.user': 'SMTP 用户名',
+      'settings.smtp.user.placeholder': 'your-email@email.com',
+      'settings.smtp.pass': 'SMTP 密码/授权码',
+      'settings.smtp.pass.placeholder': '您的邮箱授权码',
+      'settings.smtp.secure': '使用 SSL/TLS 加密连接（推荐使用）',
+
+      // 邮件模板
+      'settings.template.title': '邮件通知格式配置',
+      'settings.template.help': '可用变量：',
+      'settings.template.var.friendName': '好友名称',
+      'settings.template.var.changeType': '变化类型（好友上线/好友下线/切换世界/状态更新/自定义状态）',
+      'settings.template.var.changeDescription': '变化描述文本',
+      'settings.template.var.changeDetailsHtml': '变化详情HTML表格（自动根据变化类型生成）',
+      'settings.template.var.oldStatus': '变化前的状态',
+      'settings.template.var.newStatus': '变化后的状态',
+      'settings.template.var.oldStatusDescription': '变化前的自定义状态',
+      'settings.template.var.newStatusDescription': '变化后的自定义状态',
+      'settings.template.var.oldWorld': '之前所在的世界',
+      'settings.template.var.newWorld': '当前所在的世界',
+      'settings.template.var.timestamp': '状态变化时间',
+      'settings.template.var.avatarUrl': '好友头像URL',
+      'settings.template.hint': '提示：如不需要自定义模板，可留空使用系统默认模板。系统会根据变化类型自动显示相应的变化详情。',
+      'settings.template.subject': '邮件主题模板',
+      'settings.template.subject.placeholder': '[vrc-notifier] {changeType}: {friendName}',
+      'settings.template.body': '邮件内容模板（支持HTML，留空使用默认模板）',
+      'settings.template.body.placeholder': '留空将使用系统默认模板，自动显示好友状态变化详情...',
+      'settings.template.preview.single': '邮件模板预览：',
+      'settings.template.preview.singleTitle': '[单条通知模板] - 好友上线/下线/状态变化',
+      'settings.template.preview.batchTitle': '[批量通知模板] - 多个好友世界变化',
+
+      // 测试邮件
+      'settings.test.title': '发送测试邮件',
+      'settings.test.desc': '配置完成后，点击按钮发送测试邮件验证 SMTP 设置是否正确。',
+      'settings.test.email': '测试邮箱地址（可选）',
+      'settings.test.email.placeholder': '默认使用接收邮箱',
+      'settings.test.btn': '发送测试邮件',
+      'settings.test.success': '测试邮件已发送',
+      'settings.test.fail': '发送测试邮件失败',
+
+      // 保存设置
+      'settings.save': '保存所有设置',
+      'settings.saved': '设置已保存',
+      'settings.saveFail': '保存失败',
+
+      // QQ推送设置 (Qmsg酱)
+      'qmsg.title': 'Qmsg酱 QQ推送配置',
+      'qmsg.enable': '启用 Qmsg酱 QQ推送通知',
+      'qmsg.enable.desc': '开启后，当好友状态变化时，将通过 Qmsg酱 服务推送通知到您的 QQ。',
+      'qmsg.config.title': '基本配置',
+      'qmsg.key': 'Qmsg酱 KEY',
+      'qmsg.key.placeholder': '请输入您的 Qmsg酱 KEY',
+      'qmsg.key.hint': '在 Qmsg酱管理台获取，格式如：4dfglkslkfiuoernglalksajkljlhdgh',
+      'qmsg.qq': '接收消息的QQ号（可选）',
+      'qmsg.qq.placeholder': '多个QQ号用逗号分隔，如：12345,12346',
+      'qmsg.qq.hint': '不填写则推送到管理台默认的QQ号。多个QQ号用英文逗号分隔。',
+      'qmsg.msgType': '消息类型',
+      'qmsg.isGroup': '发送到QQ群（默认发送到私聊）',
+      'qmsg.botQq': '指定机器人QQ号（可选）',
+      'qmsg.botQq.placeholder': '仅私有云有效',
+      'qmsg.botQq.hint': '指定使用哪个机器人发送消息，不指定则自动随机选择。仅私有云版本有效。',
+      'qmsg.template.title': 'Qmsg酱 消息模板配置（可选）',
+      'qmsg.template.custom': '自定义消息模板',
+      'qmsg.template.desc': '您可以自定义推送消息的格式，使用以下变量：',
+      'qmsg.template.var.friendName': '好友名称',
+      'qmsg.template.var.changeType': '变化类型（上线/下线/状态变化/切换世界）',
+      'qmsg.template.var.oldStatus': '变化前状态',
+      'qmsg.template.var.newStatus': '变化后状态',
+      'qmsg.template.var.oldWorld': '变化前所在世界',
+      'qmsg.template.var.newWorld': '变化后所在世界',
+      'qmsg.template.var.timestamp': '时间戳',
+      'qmsg.template.label': '消息模板',
+      'qmsg.test.title': '发送测试推送',
+      'qmsg.test.desc': '配置完成后，点击按钮发送测试推送验证 Qmsg酱 设置是否正确。',
+      'qmsg.test.btn': '发送测试推送',
+      'qmsg.help.title': '使用说明',
+      'qmsg.help.what': '什么是 Qmsg酱?',
+      'qmsg.help.what.desc': 'Qmsg酱是一个QQ消息推送服务平台，可以将消息推送到您的QQ私聊或QQ群中。无需安装任何App，只需要在QQ中添加机器人为好友即可接收推送。',
+      'qmsg.help.steps.title': '配置步骤:',
+      'qmsg.help.step1': '访问 https://qmsg.zendee.cn/ 注册账号',
+      'qmsg.help.step2': '登录管理台，添加需要接收消息的QQ号（或QQ群）',
+      'qmsg.help.step3': '在管理台获取您的 KEY',
+      'qmsg.help.step4': '将 KEY 填写到上面的配置中',
+      'qmsg.help.step5': '点击"发送测试推送"验证配置',
+      'qmsg.help.step6': '在QQ中添加机器人为好友（或邀请机器人入群）',
+      'qmsg.help.docs': '官网文档:',
+      'qmsg.help.docs.link': '详细文档请访问：https://qmsg.zendee.cn/docs/api',
+      'qmsg.save': '保存 Qmsg酱 设置',
+      'qmsg.saved': 'Qmsg酱 设置已保存',
+      'qmsg.saveFail': '保存失败',
+
+      // Gotify设置
+      'gotify.title': 'Gotify 推送通知配置',
+      'gotify.enable': '启用 Gotify 推送通知',
+      'gotify.enable.desc': '开启后，当好友状态变化时，将通过 Gotify 服务器推送通知到您的设备。',
+      'gotify.server.title': '服务器配置',
+      'gotify.server.url': 'Gotify 服务器地址',
+      'gotify.server.url.placeholder': 'https://gotify.example.com 或 http://192.168.1.100:8080',
+      'gotify.server.url.hint': '您的 Gotify 服务器地址，例如: http://your-server:8080',
+      'gotify.appToken': '应用 Token',
+      'gotify.appToken.placeholder': '在 Gotify 网页端创建应用后获取的 Token',
+      'gotify.appToken.hint': '在 Gotify 的 Apps 页面创建应用后获取的 Token',
+      'gotify.priority': '消息优先级 (1-10)',
+      'gotify.priority.placeholder': '5',
+      'gotify.priority.hint': '优先级越高，通知越明显。建议: 普通通知=5，重要通知=8-10',
+
+      // Gotify模板
+      'gotify.template.title': 'Gotify 推送模板配置（可选）',
+      'gotify.template.smart.title': '智能推送标题（默认）',
+      'gotify.template.smart.desc': '系统已内置智能标题生成，无需配置模板即可使用：',
+      'gotify.template.smart.online': '上线： 好友名称 上线了',
+      'gotify.template.smart.offline': '下线： 好友名称 下线了',
+      'gotify.template.smart.world': '切换世界： 好友名称: 旧世界 → 新世界',
+      'gotify.template.smart.status': '状态变化： 好友名称: 旧状态 → 新状态',
+      'gotify.template.smart.hint': '建议：使用默认智能标题即可，标题会直接显示变化内容，无需点开就能知道发生了什么。',
+      'gotify.template.vars.title': '自定义模板变量（高级用户）：',
+      'gotify.template.var.friendName': '好友名称',
+      'gotify.template.var.changeType': '变化类型（上线/下线/切换世界/状态变化/自定义状态）',
+      'gotify.template.var.oldStatus': '变化前的状态',
+      'gotify.template.var.newStatus': '变化后的状态',
+      'gotify.template.var.oldStatusDescription': '变化前的自定义状态',
+      'gotify.template.var.newStatusDescription': '变化后的自定义状态',
+      'gotify.template.var.oldWorld': '之前所在的世界',
+      'gotify.template.var.newWorld': '当前所在的世界',
+      'gotify.template.var.timestamp': '状态变化时间',
+      'gotify.template.markdown': '提示：消息内容支持 Markdown 格式，可以使用 **粗体**、*斜体*、- 列表等语法。',
+      'gotify.template.custom.title': '自定义推送标题模板（留空使用智能标题）',
+      'gotify.template.custom.title.placeholder': '留空使用智能标题: 好友名称 上线了',
+      'gotify.template.custom.message': '自定义推送内容模板（留空使用默认格式）',
+      'gotify.template.custom.message.placeholder': '留空使用默认格式，包含状态、世界等详细信息...',
+      'gotify.template.preview.title': '推送预览：',
+      'gotify.template.preview.single': '[单条推送预览] - 好友上线',
+      'gotify.template.preview.batch': '[批量推送预览] - 多个好友状态变化',
+      'gotify.template.preview.default': '默认使用智能标题，无需配置模板即可直观显示变化内容',
+
+      // Gotify测试
+      'gotify.test.title': '发送测试推送',
+      'gotify.test.desc': '配置完成后，点击按钮发送测试推送验证 Gotify 设置是否正确。',
+      'gotify.test.btn': '发送测试推送',
+      'gotify.test.success': '测试推送已发送',
+      'gotify.test.fail': '发送失败',
+
+      // Gotify说明
+      'gotify.help.title': '使用说明',
+      'gotify.help.what': '什么是 Gotify?',
+      'gotify.help.what.desc': 'Gotify 是一个开源的自托管消息推送服务器，可以将通知推送到您的 Android 设备或浏览器。您需要在服务器上部署 Gotify，然后在手机上下载 Gotify App 来接收推送。',
+      'gotify.help.steps.title': '配置步骤:',
+      'gotify.help.step1': '在您的服务器上部署 Gotify（Docker 部署最简单）',
+      'gotify.help.step2': '登录 Gotify Web 界面，创建一个新的 Application',
+      'gotify.help.step3': '复制生成的 Token，填写到上面的"应用 Token"字段',
+      'gotify.help.step4': '填写您的 Gotify 服务器地址',
+      'gotify.help.step5': '点击"发送测试推送"验证配置',
+      'gotify.help.step6': '在手机上下载 Gotify App，登录后即可接收推送',
+      'gotify.help.docker.title': 'Docker 快速部署 Gotify:',
+
+      // Gotify保存
+      'gotify.save': '保存 Gotify 设置',
+      'gotify.saved': 'Gotify 设置已保存',
+      'gotify.saveFail': '保存失败',
+
+      // Webhook设置
+      'tab.webhook': 'Webhook推送',
+      'webhook.title': '通用 Webhook 推送配置',
+      'webhook.basic.title': '基础配置',
+      'webhook.enable': '启用 Webhook 推送',
+      'webhook.enable.hint': '开启后可接收通用 Webhook 推送通知',
+      'webhook.url': 'Webhook URL',
+      'webhook.url.placeholder': 'https://example.com/api/webhook',
+      'webhook.url.hint': '接收推送通知的 HTTP 端点地址',
+      'webhook.method': '请求方法',
+      'webhook.contentType': 'Content-Type',
+      'webhook.headers.title': '自定义请求头（可选）',
+      'webhook.headers.desc': '用于身份验证或其他自定义请求头，JSON 格式，例如：{"Authorization": "Bearer xxx"}',
+      'webhook.headers.placeholder': '{"Authorization": "Bearer your-token"}',
+      'webhook.template.title': '请求体模板（可选）',
+      'webhook.template.desc': '自定义 Webhook 请求体，留空使用默认 JSON 格式。支持以下变量：',
+      'webhook.template.var.friendName': '好友名称',
+      'webhook.template.var.changeType': '变化类型（上线/下线/切换世界/状态变化/自定义状态）',
+      'webhook.template.var.oldStatus': '变化前状态',
+      'webhook.template.var.newStatus': '变化后状态',
+      'webhook.template.var.oldStatusDescription': '变化前的自定义状态',
+      'webhook.template.var.newStatusDescription': '变化后的自定义状态',
+      'webhook.template.var.oldWorld': '之前世界',
+      'webhook.template.var.newWorld': '当前世界',
+      'webhook.template.var.timestamp': '时间戳',
+      'webhook.template.var.avatarUrl': '头像URL',
+      'webhook.template.var.eventType': '事件类型',
+      'webhook.template.body': '请求体模板（JSON 或自定义格式）',
+      'webhook.template.body.placeholder': '{\n  "event": "{eventType}",\n  "timestamp": "{timestamp}",\n  "friend": {\n    "name": "{friendName}",\n    "avatar": "{avatarUrl}"\n  },\n  "change": {\n    "type": "{changeType}",\n    "oldStatus": "{oldStatus}",\n    "newStatus": "{newStatus}",\n    "oldWorld": "{oldWorld}",\n    "newWorld": "{newWorld}"\n  }\n}',
+      'webhook.test.title': '发送测试 Webhook',
+      'webhook.test.desc': '配置完成后，点击按钮发送测试请求验证 Webhook 设置是否正确。',
+      'webhook.test.btn': '发送测试 Webhook',
+      'webhook.test.fail': '发送失败',
+      'webhook.help.title': '使用说明',
+      'webhook.help.what': '什么是通用 Webhook?',
+      'webhook.help.what.desc': '通用 Webhook 允许您将通知推送到任何支持 HTTP 请求的第三方服务，如 Discord、Slack、企业微信、钉钉、飞书等。只需配置目标 URL 和请求格式，即可实现消息推送。',
+      'webhook.help.examples.title': '支持的推送平台示例:',
+      'webhook.save': '保存 Webhook 设置',
+      'webhook.saved': 'Webhook 设置已保存',
+      'webhook.saveFail': '保存失败',
+
+      // 限流提示
+      'ratelimit.title': 'API限流保护已触发',
+      'ratelimit.message': '检测到API请求频率过高，系统已自动暂停60秒以保护您的账号安全',
+      'ratelimit.type': '触发类型',
+      'ratelimit.duration': '暂停时长',
+      'ratelimit.seconds': '秒',
+
+      // 空状态
+      'empty.friends': '暂无好友',
+      'empty.loading': '正在加载好友列表...',
+      'empty.loadFail': '加载失败',
+
+      // 语言切换
+      'lang.switch': '切换语言',
+      'lang.zh': '中文',
+      'lang.en': 'English',
+    },
+    en: {
+      // General
+      'app.name': 'VRC-Notifier',
+      'app.title': 'vrc-notifier',
+      'loading': 'Loading...',
+      'save': 'Save',
+      'cancel': 'Cancel',
+      'confirm': 'Confirm',
+      'close': 'Close',
+      'refresh': 'Refresh',
+      'settings': 'Settings',
+      'logout': 'Logout',
+      'login': 'Login',
+      'email': 'Email',
+      'password': 'Password',
+      'username': 'Username',
+
+      // Access Verification
+      'access.verify.title': 'Access Verification',
+      'access.verify.desc': 'Please enter the access key. The key has been generated in the terminal and can be disabled after login.',
+      'access.verify.key': 'Access Key',
+      'access.verify.placeholder': 'Enter access key',
+      'access.verify.btn': 'Verify & Continue',
+      'access.verify.success': 'Verification successful',
+      'access.verify.error': 'Invalid access key',
+      'access.verify.required': 'Please enter the access key',
+
+      // Login
+      'login.title': 'Login to VRChat',
+      'login.username.placeholder': 'VRChat Username/Email',
+      'login.password.placeholder': 'Password',
+      'login.code': 'Verification Code',
+      'login.code.placeholder': 'Email verification code',
+      'login.sendCode': 'Send Code',
+      'login.sending': 'Sending...',
+      'login.verify': 'Login',
+      'login.verifying': 'Logging in...',
+      'login.success': 'Login successful!',
+      'login.error.empty': 'Please enter username and password',
+      'login.error.network': 'Network connection failed, please check your network',
+      'login.rememberMe': 'Remember me (auto-login next time)',
+      'login.hint.title': 'Usage Tips',
+      'login.hint.content': '[Important] To prevent login disconnections, it is recommended to deploy this tool in the same network environment as the game (same IP address). If you need to use this tool while playing the game, please start the game first, then start this tool to maintain the same session. If the tool\'s login session is detected logging in from another IP (such as starting the game), the tool will automatically stop monitoring.',
+
+      // Logout
+      'logout.confirm': 'Are you sure you want to logout?',
+      'logout.clear.confirm': '[!] Warning: This will logout your account!\n\nTo clear all local data, please manually delete the "data" folder in the program directory.\n\nAre you sure you want to logout?',
+      'logout.clear.success': '[OK] Logged out\n\nTo clear all local data, please manually delete the "data" folder in the program directory.\n\nSteps:\n1. Close this program\n2. Delete the "data" folder in the program directory\n3. Restart the program\n\nThis will completely reset all data.',
+      'logout.clear.error': '[X] Logout failed, please try again later',
+
+      // Tabs
+      'tab.friends': 'Friends',
+      'tab.settings': 'SMTP & Settings',
+      'tab.gotify': 'Gotify Settings',
+      'tab.qmsg': 'QQ Push Settings',
+
+      // Announcement
+      'announcement.title': 'Usage Notice',
+      'announcement.api.title': '[API] Request Logic',
+      'announcement.api.login': 'Login: Only fetch friend list (2 API calls), no world info',
+      'announcement.api.refresh': 'Manual Refresh: Fetch friend list and friend status info',
+      'announcement.api.monitor': 'Monitoring: Check every 30s, only fetch world info for monitored friends (Standard mode)',
+      'announcement.api.cooldown': 'Cooldown: Pause all API requests for 60s after login/refresh to prevent conflicts',
+      'announcement.tips.title': '[!] Important Tips',
+      'announcement.tips.limit': 'Monitor up to 5 friends. Only monitored friends will have world info fetched',
+      'announcement.tips.vrcx': 'VRCX Compatibility: Using VRCX may cause API conflicts, but this tool has sufficient API redundancy and won\'t affect VRCX',
+      'announcement.tips.reset': 'If you encounter issues, click "Logout & Clear Data" button, then manually delete files in data folder',
+      'announcement.disclaimer': 'Disclaimer: This application minimizes API usage risks with underlying protection. Normal use will not result in account bans. We are not responsible for any account bans. (Open Source Community Statement)',
+      'announcement.footer.author': 'Author: 闪耀金金/ShanyJin',
+      'announcement.footer.website': 'Author Website',
+      'announcement.footer.community': 'VRChat Community',
+      'announcement.footer.tool': 'Tool Introduction',
+
+      // Status Only Mode Toggle
+      'statusOnly.toggle': 'Status Only Mode',
+      'statusOnly.help': 'Learn about Status Only Mode',
+      'statusOnly.hint.enabled': 'Status Only Mode enabled: Will no longer monitor friend world status, but monitor count is unlimited',
+      'statusOnly.hint.disabled': 'If you encounter issues, click "Logout & Clear Data" to clear local cache and re-login',
+
+      // User Info
+      'user.status.unknown': 'Unknown Status',
+      'user.logout': 'Logout',
+      'user.logoutClear': 'Logout & Clear Data',
+      'user.clear.hint': 'If you encounter issues, click "Logout & Clear Data" to clear local cache and re-login',
+
+      // Friends List Controls
+      'friends.unmonitorAll': 'Unmonitor All',
+      'friends.refresh': 'Refresh',
+      'friends.refresh.hint': 'Do not click frequently',
+      'friends.refresh.cooldown': 'Cooldown: ',
+      'friends.refresh.cooldown.suffix': 's remaining',
+      'friends.refresh.success': 'Refresh successful!',
+      'friends.monitor.limit': 'Monitor up to 5 friends. Only monitored friends will refresh status',
+      'friends.about': 'About',
+      'friends.view.toggle': 'Toggle View',
+
+      // About Panel
+      'about.title': '[Feature Description]',
+      'about.desc': 'This tool is a background monitoring tool used to silently monitor your friends\' status changes and notify you via email and platform notifications.',
+      'about.feature1': 'This tool does NOT display friend status in real-time on the frontend (for that, use VRCX)',
+      'about.feature2': 'After enabling monitoring, the program runs automatically in the background, sending notifications when friends go online/offline/change worlds',
+      'about.feature3': 'You don\'t need to keep the webpage open, just keep the backend program running',
+      'about.feature4': 'Recommended to deploy on a server or long-running device',
+      'about.api.title': '[API] Request Logic',
+      'about.api.login': 'Login: Only fetch online and offline friend lists (2 API requests), no world info',
+      'about.api.refresh': 'Manual Refresh: Fetch friend list info, pause monitoring for 60s after refresh',
+      'about.api.monitor': 'Monitoring Check: Check every 30s, only fetch world info for monitored friends (polling mechanism, one friend every 10s)',
+      'about.api.cooldown': 'Cooldown: Pause all monitoring for 60s after login or refresh to prevent API conflicts',
+      'about.security.title': '[Security] API Protection',
+      'about.security.desc': 'This tool has built-in multiple API protection mechanisms to ensure your account safety:',
+      'about.security.rate': 'Request Rate Limiting: Strictly follows VRChat API specifications: User profile ≤1/min, Friend status ≤2/min, World info ≤6/min',
+      'about.security.pause': 'Auto Rate Limit Protection: System automatically pauses for 60s when high request frequency is detected',
+      'about.security.alert': 'Real-time Popup Alerts: Red popup alerts when rate limit protection is triggered',
+      'about.security.conservative': 'Conservative Strategy: All API request frequencies are below official limits with sufficient safety margin',
+      'about.security.safe': 'Normal use will not result in account bans',
+      'about.tips.title': '[!] Usage Tips',
+      'about.tips.limit': 'In standard mode, monitor up to 5 friends. Only monitored friends will have world info fetched',
+      'about.tips.reset': 'If you encounter issues, use "Logout & Clear Data" to clear all local data and re-login',
+      'about.tips.frequent': 'Do not refresh friend list frequently to avoid triggering API rate limits',
+      'about.tips.vrcx': 'May cause API conflicts when used with VRCX, but this tool has sufficient redundancy and won\'t affect VRCX',
+      'about.clear.title': '[X] Logout & Clear Data',
+      'about.clear.desc': 'Clicking "Logout & Clear Data" will:',
+      'about.clear.action1': 'Logout current account',
+      'about.clear.action2': 'Prompt you to manually delete the data folder to clear all data',
+      'about.clear.usage': 'Applicable for: Data anomalies, cache issues, need to reset all settings',
+      'about.footer.name': 'VRC-Notifier',
+      'about.footer.author': 'Author: 闪耀金金/ShanyJin',
+      'about.footer.website': 'Author Website',
+      'about.footer.community': 'VRChat Community',
+      'about.footer.tool': 'Tool Introduction',
+
+      // Status Only Mode
+      'statusOnly.title': '[?] What is "Status Only" Mode?',
+      'statusOnly.desc': 'This is a simplified monitoring mode that only tracks friends\' online/offline status, not which world they are in.',
+      'statusOnly.why.title': '[+] Why use this mode?',
+      'statusOnly.why.friends': 'More Friends:',
+      'statusOnly.why.friends.desc': 'Standard mode limits to 5 friends, this mode can monitor ALL friends',
+      'statusOnly.why.api': 'Save API Quota:',
+      'statusOnly.why.api.desc': 'No world queries, API calls reduced from 8/min to 2/min',
+      'statusOnly.why.simple': 'Simpler Notifications:',
+      'statusOnly.why.simple.desc': 'Only care if friends are online and their status, not which room they are in',
+      'statusOnly.why.load': 'Lower Server Load:',
+      'statusOnly.why.load.desc': 'Reduced API requests, more server-friendly',
+      'statusOnly.compare.title': '[↻] Mode Comparison',
+      'statusOnly.compare.feature': 'Feature',
+      'statusOnly.compare.standard': 'Standard Mode',
+      'statusOnly.compare.statusOnly': 'Status Only Mode',
+      'statusOnly.compare.monitorCount': 'Monitor Count',
+      'statusOnly.compare.monitorCount.standard': 'Max 5',
+      'statusOnly.compare.monitorCount.statusOnly': 'Unlimited',
+      'statusOnly.compare.onlineStatus': 'Online Status',
+      'statusOnly.compare.onlineStatus.support': 'Supported',
+      'statusOnly.compare.worldChange': 'World Change',
+      'statusOnly.compare.worldChange.no': 'Not Supported',
+      'statusOnly.compare.apiCalls': 'API Calls',
+      'statusOnly.compare.apiCalls.standard': '8/min',
+      'statusOnly.compare.apiCalls.statusOnly': '2/min',
+      'statusOnly.how.title': '[!] How to Use?',
+      'statusOnly.how.step1': 'Click "Status Only Mode" toggle to enable this mode',
+      'statusOnly.how.step2': 'Confirm switch (will automatically unmonitor all currently monitored friends)',
+      'statusOnly.how.step3': 'Click "Unmonitor All Friends" button to close all friends',
+      'statusOnly.how.step4': 'Done! You will receive online/offline notifications for all friends',
+      'statusOnly.warning.title': '[⚠] Important Notes',
+      'statusOnly.warning.reset': 'Switching modes will automatically unmonitor all friends, need to reselect',
+      'statusOnly.warning.noWorld': 'In this mode you will NOT receive world change notifications (e.g., friend switching rooms)',
+      'statusOnly.warning.useStandard': 'If you want to monitor specific friends\' world changes, use Standard Mode',
+      'statusOnly.warning.switch': 'Both modes can be switched anytime, but each switch resets the monitor list',
+      'statusOnly.close': 'Got it',
+
+      // Friend Card
+      'friend.monitor.enable': 'Enable Monitoring',
+      'friend.monitor.disable': 'Disable Monitoring',
+      'friend.settings': 'Settings',
+      'friend.status.offline': 'Offline',
+      'friend.status.active': 'Active',
+      'friend.status.joinme': 'Join Me',
+      'friend.status.askme': 'Ask Me',
+      'friend.status.busy': 'Busy',
+      'friend.monitor.max': 'You can only monitor up to 5 friends. Please disable monitoring for some friends first.',
+      'friend.monitor.fail': 'Failed to update monitoring status',
+
+      // Friend Settings Modal
+      'friend.modal.title': 'Friend Notification Settings',
+      'friend.modal.notifyOnline': 'Online Notification',
+      'friend.modal.notifyOffline': 'Offline Notification',
+      'friend.modal.notifyStatus': 'Status Change Notification',
+      'friend.modal.notifyWorld': 'World Change Notification',
+      'friend.modal.saved': 'Settings saved',
+      'friend.modal.saveFail': 'Failed to save',
+
+      // Tool Settings
+      'settings.tool.title': 'Tool Settings',
+      'settings.accessKey.enable': 'Enable Access Key Protection',
+      'settings.accessKey.desc': 'When enabled, access key is required to access the webpage. Recommended for public deployment, optional for local deployment.',
+      'settings.accessKey.current': 'Current Access Key (Save it!)',
+      'settings.accessKey.copy': 'Copy',
+      'settings.accessKey.regenerate': 'Regenerate',
+      'settings.accessKey.warning': 'Warning: After regenerating the key, the previous key will become invalid and you will need to re-enter it!',
+      'settings.accessKey.copied': 'Key copied to clipboard',
+      'settings.accessKey.enabled': 'Access key enabled',
+      'settings.accessKey.disabled': 'Access key disabled',
+
+      // Email Settings
+      'settings.email.title': 'Email Notification Configuration',
+      'settings.monitor.enable': 'Enable Friend Status Monitoring',
+      'settings.notifyEmail': 'Notification Email',
+      'settings.notifyEmail.placeholder': 'example@email.com',
+
+      // SMTP Settings
+      'settings.smtp.title': 'SMTP Server Configuration',
+      'settings.smtp.host': 'SMTP Server Address',
+      'settings.smtp.host.placeholder': 'smtp.qq.com',
+      'settings.smtp.port': 'Port',
+      'settings.smtp.port.placeholder': '465',
+      'settings.smtp.user': 'SMTP Username',
+      'settings.smtp.user.placeholder': 'your-email@email.com',
+      'settings.smtp.pass': 'SMTP Password/Auth Code',
+      'settings.smtp.pass.placeholder': 'Your email auth code',
+      'settings.smtp.secure': 'Use SSL/TLS encrypted connection (recommended)',
+
+      // Email Template
+      'settings.template.title': 'Email Notification Format',
+      'settings.template.help': 'Available Variables:',
+      'settings.template.var.friendName': 'Friend name',
+      'settings.template.var.changeType': 'Change type (Friend Online/Friend Offline/World Change/Status Update/Custom Status)',
+      'settings.template.var.changeDescription': 'Change description text',
+      'settings.template.var.changeDetailsHtml': 'Change details HTML table (auto-generated based on change type)',
+      'settings.template.var.oldStatus': 'Status before change',
+      'settings.template.var.newStatus': 'Status after change',
+      'settings.template.var.oldStatusDescription': 'Custom status before change',
+      'settings.template.var.newStatusDescription': 'Custom status after change',
+      'settings.template.var.oldWorld': 'Previous world',
+      'settings.template.var.newWorld': 'Current world',
+      'settings.template.var.timestamp': 'Status change time',
+      'settings.template.var.avatarUrl': 'Friend avatar URL',
+      'settings.template.hint': 'Tip: Leave blank to use system default template. The system will automatically display appropriate change details based on change type.',
+      'settings.template.subject': 'Email Subject Template',
+      'settings.template.subject.placeholder': '[vrc-notifier] {changeType}: {friendName}',
+      'settings.template.body': 'Email Body Template (HTML supported, leave blank for default)',
+      'settings.template.body.placeholder': 'Leave blank to use system default template...',
+      'settings.template.preview.single': 'Email Template Preview:',
+      'settings.template.preview.singleTitle': '[Single Notification] - Friend Online/Offline/Status Change',
+      'settings.template.preview.batchTitle': '[Batch Notification] - Multiple Friends World Change',
+
+      // Test Email
+      'settings.test.title': 'Send Test Email',
+      'settings.test.desc': 'After configuration, click the button to send a test email to verify SMTP settings.',
+      'settings.test.email': 'Test Email Address (Optional)',
+      'settings.test.email.placeholder': 'Defaults to notification email',
+      'settings.test.btn': 'Send Test Email',
+      'settings.test.success': 'Test email sent',
+      'settings.test.fail': 'Failed to send test email',
+
+      // Save Settings
+      'settings.save': 'Save All Settings',
+      'settings.saved': 'Settings saved',
+      'settings.saveFail': 'Failed to save',
+
+      // QQ Push Settings (Qmsg酱)
+      'qmsg.title': 'Qmsg酱 QQ Push Configuration',
+      'qmsg.enable': 'Enable Qmsg酱 QQ Push Notifications',
+      'qmsg.enable.desc': 'When enabled, notifications will be sent via Qmsg酱 service to your QQ when friend status changes.',
+      'qmsg.config.title': 'Basic Configuration',
+      'qmsg.key': 'Qmsg酱 KEY',
+      'qmsg.key.placeholder': 'Enter your Qmsg酱 KEY',
+      'qmsg.key.hint': 'Get from Qmsg酱 admin console, format like: 4dfglkslkfiuoernglalksajkljlhdgh',
+      'qmsg.qq': 'Target QQ Number (Optional)',
+      'qmsg.qq.placeholder': 'Multiple QQ numbers separated by comma, e.g.: 12345,12346',
+      'qmsg.qq.hint': 'Leave empty to push to default QQ in admin console. Multiple QQs separated by English comma.',
+      'qmsg.msgType': 'Message Type',
+      'qmsg.isGroup': 'Send to QQ Group (Default: Private Message)',
+      'qmsg.botQq': 'Specify Bot QQ (Optional)',
+      'qmsg.botQq.placeholder': 'Private cloud only',
+      'qmsg.botQq.hint': 'Specify which bot to send messages. Auto-random if not specified. Private cloud version only.',
+      'qmsg.template.title': 'Qmsg酱 Message Template (Optional)',
+      'qmsg.template.custom': 'Custom Message Template',
+      'qmsg.template.desc': 'You can customize the push message format using these variables:',
+      'qmsg.template.var.friendName': 'Friend name',
+      'qmsg.template.var.changeType': 'Change type (Online/Offline/Status Change/World Change)',
+      'qmsg.template.var.oldStatus': 'Status before change',
+      'qmsg.template.var.newStatus': 'Status after change',
+      'qmsg.template.var.oldWorld': 'World before change',
+      'qmsg.template.var.newWorld': 'World after change',
+      'qmsg.template.var.timestamp': 'Timestamp',
+      'qmsg.template.label': 'Message Template',
+      'qmsg.test.title': 'Send Test Push',
+      'qmsg.test.desc': 'After configuration, click the button to send a test push to verify Qmsg酱 settings.',
+      'qmsg.test.btn': 'Send Test Push',
+      'qmsg.help.title': 'Instructions',
+      'qmsg.help.what': 'What is Qmsg酱?',
+      'qmsg.help.what.desc': 'Qmsg酱 is a QQ message push service platform that can send messages to your QQ private chat or QQ groups. No App installation needed, just add the bot as friend in QQ to receive pushes.',
+      'qmsg.help.steps.title': 'Configuration Steps:',
+      'qmsg.help.step1': 'Visit https://qmsg.zendee.cn/ to register an account',
+      'qmsg.help.step2': 'Login to admin console, add QQ numbers (or QQ groups) to receive messages',
+      'qmsg.help.step3': 'Get your KEY from the admin console',
+      'qmsg.help.step4': 'Fill the KEY in the configuration above',
+      'qmsg.help.step5': 'Click "Send Test Push" to verify configuration',
+      'qmsg.help.step6': 'Add the bot as friend in QQ (or invite bot to group)',
+      'qmsg.help.docs': 'Official Documentation:',
+      'qmsg.help.docs.link': 'Detailed docs: https://qmsg.zendee.cn/docs/api',
+      'qmsg.save': 'Save Qmsg酱 Settings',
+      'qmsg.saved': 'Qmsg酱 settings saved',
+      'qmsg.saveFail': 'Failed to save',
+
+      // Gotify Settings
+      'gotify.title': 'Gotify Push Notification Configuration',
+      'gotify.enable': 'Enable Gotify Push Notifications',
+      'gotify.enable.desc': 'When enabled, notifications will be sent via Gotify server to your device when friend status changes.',
+      'gotify.server.title': 'Server Configuration',
+      'gotify.server.url': 'Gotify Server URL',
+      'gotify.server.url.placeholder': 'https://gotify.example.com or http://192.168.1.100:8080',
+      'gotify.server.url.hint': 'Your Gotify server address, e.g.: http://your-server:8080',
+      'gotify.appToken': 'App Token',
+      'gotify.appToken.placeholder': 'Token obtained after creating an app in Gotify web interface',
+      'gotify.appToken.hint': 'Token obtained from the Apps page in Gotify',
+      'gotify.priority': 'Message Priority (1-10)',
+      'gotify.priority.placeholder': '5',
+      'gotify.priority.hint': 'Higher priority = more noticeable notifications. Suggested: Normal=5, Important=8-10',
+
+      // Gotify Template
+      'gotify.template.title': 'Gotify Push Template (Optional)',
+      'gotify.template.smart.title': 'Smart Push Title (Default)',
+      'gotify.template.smart.desc': 'System has built-in smart title generation, no template configuration needed:',
+      'gotify.template.smart.online': 'Online: FriendName is online',
+      'gotify.template.smart.offline': 'Offline: FriendName is offline',
+      'gotify.template.smart.world': 'World Change: FriendName: OldWorld → NewWorld',
+      'gotify.template.smart.status': 'Status Change: FriendName: OldStatus → NewStatus',
+      'gotify.template.smart.hint': 'Suggestion: Use default smart titles which directly show the change content without opening the notification.',
+      'gotify.template.vars.title': 'Custom Template Variables (Advanced):',
+      'gotify.template.var.friendName': 'Friend name',
+      'gotify.template.var.changeType': 'Change type (Online/Offline/World Change/Status Change/Custom Status)',
+      'gotify.template.var.oldStatus': 'Status before change',
+      'gotify.template.var.newStatus': 'Status after change',
+      'gotify.template.var.oldStatusDescription': 'Custom status before change',
+      'gotify.template.var.newStatusDescription': 'Custom status after change',
+      'gotify.template.var.oldWorld': 'Previous world',
+      'gotify.template.var.newWorld': 'Current world',
+      'gotify.template.var.timestamp': 'Status change time',
+      'gotify.template.markdown': 'Tip: Message content supports Markdown format. Use **bold**, *italic*, - lists, etc.',
+      'gotify.template.custom.title': 'Custom Push Title (leave blank for smart title)',
+      'gotify.template.custom.title.placeholder': 'Leave blank for smart title: FriendName is online',
+      'gotify.template.custom.message': 'Custom Push Content (leave blank for default format)',
+      'gotify.template.custom.message.placeholder': 'Leave blank for default format with status, world, etc...',
+      'gotify.template.preview.title': 'Push Preview:',
+      'gotify.template.preview.single': '[Single Push Preview] - Friend Online',
+      'gotify.template.preview.batch': '[Batch Push Preview] - Multiple Friends Status Change',
+      'gotify.template.preview.default': 'Default uses smart title, no template configuration needed to intuitively display changes',
+
+      // Gotify Test
+      'gotify.test.title': 'Send Test Push',
+      'gotify.test.desc': 'After configuration, click the button to send a test push to verify Gotify settings.',
+      'gotify.test.btn': 'Send Test Push',
+      'gotify.test.success': 'Test push sent',
+      'gotify.test.fail': 'Failed to send',
+
+      // Gotify Help
+      'gotify.help.title': 'Instructions',
+      'gotify.help.what': 'What is Gotify?',
+      'gotify.help.what.desc': 'Gotify is an open-source self-hosted message push server that can send notifications to your Android device or browser. You need to deploy Gotify on your server, then download the Gotify App on your phone to receive pushes.',
+      'gotify.help.steps.title': 'Configuration Steps:',
+      'gotify.help.step1': 'Deploy Gotify on your server (Docker deployment is easiest)',
+      'gotify.help.step2': 'Login to Gotify Web interface, create a new Application',
+      'gotify.help.step3': 'Copy the generated Token and fill it in the "App Token" field above',
+      'gotify.help.step4': 'Enter your Gotify server address',
+      'gotify.help.step5': 'Click "Send Test Push" to verify configuration',
+      'gotify.help.step6': 'Download Gotify App on your phone, login to receive pushes',
+      'gotify.help.docker.title': 'Quick Docker Deployment for Gotify:',
+
+      // Gotify Save
+      'gotify.save': 'Save Gotify Settings',
+      'gotify.saved': 'Gotify settings saved',
+      'gotify.saveFail': 'Failed to save',
+
+      // Webhook Settings
+      'tab.webhook': 'Webhook Push',
+      'webhook.title': 'Generic Webhook Configuration',
+      'webhook.basic.title': 'Basic Configuration',
+      'webhook.enable': 'Enable Webhook Push',
+      'webhook.enable.hint': 'Enable to receive generic webhook push notifications',
+      'webhook.url': 'Webhook URL',
+      'webhook.url.placeholder': 'https://example.com/api/webhook',
+      'webhook.url.hint': 'HTTP endpoint address to receive push notifications',
+      'webhook.method': 'Request Method',
+      'webhook.contentType': 'Content-Type',
+      'webhook.headers.title': 'Custom Headers (Optional)',
+      'webhook.headers.desc': 'For authentication or other custom headers, JSON format, e.g.: {"Authorization": "Bearer xxx"}',
+      'webhook.headers.placeholder': '{"Authorization": "Bearer your-token"}',
+      'webhook.template.title': 'Request Body Template (Optional)',
+      'webhook.template.desc': 'Customize webhook request body, leave empty for default JSON format. Supports the following variables:',
+      'webhook.template.var.friendName': 'Friend Name',
+      'webhook.template.var.changeType': 'Change Type (Online/Offline/World Change/Status Change/Custom Status)',
+      'webhook.template.var.oldStatus': 'Previous Status',
+      'webhook.template.var.newStatus': 'New Status',
+      'webhook.template.var.oldStatusDescription': 'Custom status before change',
+      'webhook.template.var.newStatusDescription': 'Custom status after change',
+      'webhook.template.var.oldWorld': 'Previous World',
+      'webhook.template.var.newWorld': 'Current World',
+      'webhook.template.var.timestamp': 'Timestamp',
+      'webhook.template.var.avatarUrl': 'Avatar URL',
+      'webhook.template.var.eventType': 'Event Type',
+      'webhook.template.body': 'Request Body Template (JSON or custom format)',
+      'webhook.template.body.placeholder': '{\n  "event": "{eventType}",\n  "timestamp": "{timestamp}",\n  "friend": {\n    "name": "{friendName}",\n    "avatar": "{avatarUrl}"\n  },\n  "change": {\n    "type": "{changeType}",\n    "oldStatus": "{oldStatus}",\n    "newStatus": "{newStatus}",\n    "oldWorld": "{oldWorld}",\n    "newWorld": "{newWorld}"\n  }\n}',
+      'webhook.test.title': 'Send Test Webhook',
+      'webhook.test.desc': 'After configuration, click the button to send a test request to verify the webhook settings.',
+      'webhook.test.btn': 'Send Test Webhook',
+      'webhook.test.fail': 'Failed to send',
+      'webhook.help.title': 'Instructions',
+      'webhook.help.what': 'What is Generic Webhook?',
+      'webhook.help.what.desc': 'Generic Webhook allows you to push notifications to any third-party service that supports HTTP requests, such as Discord, Slack, WeChat Work, DingTalk, Feishu, etc. Just configure the target URL and request format to enable message pushing.',
+      'webhook.help.examples.title': 'Supported Push Platforms:',
+      'webhook.save': 'Save Webhook Settings',
+      'webhook.saved': 'Webhook settings saved',
+      'webhook.saveFail': 'Failed to save',
+
+      // Rate Limit
+      'ratelimit.title': 'API Rate Limit Protection Triggered',
+      'ratelimit.message': 'High API request frequency detected. System automatically paused for 60s to protect your account.',
+      'ratelimit.type': 'Trigger Type',
+      'ratelimit.duration': 'Pause Duration',
+      'ratelimit.seconds': 'seconds',
+
+      // Empty State
+      'empty.friends': 'No friends',
+      'empty.loading': 'Loading friend list...',
+      'empty.loadFail': 'Failed to load',
+
+      // Language Switch
+      'lang.switch': 'Switch Language',
+      'lang.zh': '中文',
+      'lang.en': 'English',
+    }
+  },
+
+  // 获取翻译文本
+  t(key, defaultValue = '') {
+    const translation = this.translations[this.currentLang]?.[key];
+    return translation !== undefined ? translation : (defaultValue || key);
+  },
+
+  // 切换语言
+  setLanguage(lang) {
+    if (this.translations[lang]) {
+      this.currentLang = lang;
+      localStorage.setItem('vrc-lang', lang);
+      document.documentElement.setAttribute('lang', lang === 'zh' ? 'zh-CN' : 'en');
+      this.updatePageContent();
+      return true;
+    }
+    return false;
+  },
+
+  // 获取当前语言
+  getLanguage() {
+    return this.currentLang;
+  },
+
+  // 切换语言（中英文切换）
+  toggleLanguage() {
+    const newLang = this.currentLang === 'zh' ? 'en' : 'zh';
+    this.setLanguage(newLang);
+    return newLang;
+  },
+
+  // 更新页面内容
+  updatePageContent() {
+    // 更新所有带有 data-i18n 属性的元素
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      const translation = this.t(key);
+      if (translation) {
+        // 根据元素类型设置内容
+        if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+          if (el.getAttribute('type') === 'placeholder') {
+            el.setAttribute('placeholder', translation);
+          } else {
+            el.placeholder = translation;
+          }
+        } else {
+          el.textContent = translation;
+        }
+      }
+    });
+
+    // 更新所有带有 data-i18n-placeholder 属性的 input 元素
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+      const key = el.getAttribute('data-i18n-placeholder');
+      const translation = this.t(key);
+      if (translation) {
+        el.setAttribute('placeholder', translation);
+      }
+    });
+
+    // 更新语言切换按钮显示
+    const langBtn = document.getElementById('langToggle');
+    if (langBtn) {
+      langBtn.textContent = this.currentLang === 'zh' ? 'EN' : '中';
+      langBtn.title = this.t('lang.switch');
+    }
+  },
+
+  // 初始化
+  init() {
+    // 设置初始语言
+    document.documentElement.setAttribute('lang', this.currentLang === 'zh' ? 'zh-CN' : 'en');
+    // 页面加载完成后更新内容
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => this.updatePageContent());
+    } else {
+      this.updatePageContent();
+    }
+  }
+};
+
+// 导出 i18n 对象
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = i18n;
+}

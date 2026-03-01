@@ -1,0 +1,4202 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>vrc-notifier</title>
+  <script src="i18n.js"></script>
+  <style>
+    :root {
+      /* 亮主题 */
+      --bg-primary: #ffffff;
+      --bg-secondary: #f5f7fa;
+      --bg-card: #ffffff;
+      --text-primary: #1a1a2e;
+      --text-secondary: #4a5568;
+      --text-muted: #718096;
+      --accent: #3b82f6;
+      --accent-light: #60a5fa;
+      --accent-bg: rgba(59, 130, 246, 0.1);
+      --border: #e2e8f0;
+      --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      --shadow-hover: 0 8px 30px rgba(0, 0, 0, 0.12);
+      --glass-bg: rgba(255, 255, 255, 0.8);
+      --glass-border: rgba(255, 255, 255, 0.3);
+    }
+
+    [data-theme="dark"] {
+      /* 暗主题 - 灰黑色背景 */
+      --bg-primary: #0a0a0f;
+      --bg-secondary: rgba(20, 20, 28, 0.6);
+      --bg-card: rgba(30, 30, 42, 0.5);
+      --text-primary: #f1f5f9;
+      --text-secondary: #cbd5e1;
+      --text-muted: #94a3b8;
+      --accent: #60a5fa;
+      --accent-light: #93c5fd;
+      --accent-bg: rgba(96, 165, 250, 0.12);
+      --border: rgba(255, 255, 255, 0.08);
+      --shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+      --shadow-hover: 0 8px 32px rgba(0, 0, 0, 0.6);
+      --glass-bg: rgba(35, 35, 48, 0.45);
+      --glass-border: rgba(255, 255, 255, 0.08);
+    }
+
+    * { 
+      margin: 0; 
+      padding: 0; 
+      box-sizing: border-box; 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+    }
+
+    body { 
+      background: var(--bg-primary);
+      min-height: 100vh;
+      color: var(--text-primary);
+    }
+
+    .container { 
+      max-width: 1200px; 
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    /* 头部 */
+    .header {
+      margin-bottom: 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header-title {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+    }
+    .header-title span {
+      color: var(--accent);
+    }
+
+    /* 主题切换按钮 */
+    .theme-toggle {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: var(--glass-bg);
+      backdrop-filter: blur(10px);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      color: var(--text-secondary);
+      box-shadow: var(--shadow);
+      transition: all 0.3s;
+      z-index: 100;
+    }
+    .theme-toggle:hover {
+      transform: scale(1.1);
+      box-shadow: var(--shadow-hover);
+      color: var(--accent);
+    }
+
+    /* 语言切换按钮 */
+    .lang-toggle {
+      position: fixed;
+      bottom: 2rem;
+      right: 5.5rem;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: var(--glass-bg);
+      backdrop-filter: blur(10px);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      box-shadow: var(--shadow);
+      transition: all 0.3s;
+      z-index: 100;
+    }
+    .lang-toggle:hover {
+      transform: scale(1.1);
+      box-shadow: var(--shadow-hover);
+      color: var(--accent);
+    }
+
+    /* 卡片样式 - 毛玻璃效果 */
+    .card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: var(--shadow);
+      margin-bottom: 1.5rem;
+    }
+    [data-theme="dark"] .card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(24px) saturate(160%);
+      border: 1px solid var(--glass-border);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    }
+
+    /* 登录卡片特殊样式 */
+    #loginCard {
+      max-width: 400px;
+      margin: 0 auto;
+      margin-top: 10vh;
+    }
+    #loginCard .card-title {
+      text-align: center;
+      font-size: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .card-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 2px solid var(--accent-bg);
+    }
+
+    /* 表单样式 */
+    .form-group { margin-bottom: 1.2rem; }
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+      font-size: 0.9rem;
+    }
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.95rem;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      transition: all 0.3s;
+    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-bg);
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    /* 按钮样式 */
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: all 0.3s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+    .btn:hover { 
+      transform: translateY(-1px); 
+      box-shadow: var(--shadow-hover);
+    }
+    .btn-primary { 
+      background: var(--accent); 
+      color: white;
+    }
+    .btn-primary:hover {
+      background: var(--accent-light);
+    }
+    .btn-secondary {
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover {
+      background: var(--accent-bg);
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+    .btn-danger {
+      background: #ef4444;
+      color: white;
+      border: 1px solid #ef4444;
+    }
+    .btn-danger:hover {
+      background: #dc2626;
+      border-color: #dc2626;
+    }
+    .btn-success { 
+      background: var(--accent); 
+      color: white;
+    }
+    .btn-success:hover {
+      background: var(--accent-light);
+    }
+    .btn-block { width: 100%; }
+    .btn:disabled { 
+      opacity: 0.5; 
+      cursor: not-allowed; 
+      transform: none;
+    }
+
+    /* 开关样式 */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+    }
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: var(--bg-secondary);
+      transition: .3s;
+      border: 1px solid var(--border);
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 2px;
+      bottom: 2px;
+      background-color: white;
+      transition: .3s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    input:checked + .slider {
+      background-color: var(--accent);
+      border-color: var(--accent);
+    }
+    input:checked + .slider:before {
+      transform: translateX(20px);
+    }
+    .slider.round {
+      border-radius: 24px;
+    }
+    .slider.round:before {
+      border-radius: 50%;
+    }
+
+    /* 帮助按钮 */
+    .help-btn {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+      font-size: 11px;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      padding: 0;
+      margin-left: 2px;
+    }
+    .help-btn:hover {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    /* 提示框 */
+    .alert {
+      padding: 0.875rem 1rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      display: none;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+    }
+    .alert-success { 
+      background: rgba(16, 185, 129, 0.1); 
+      color: #10b981; 
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      display: flex; 
+    }
+    .alert-error { 
+      background: rgba(239, 68, 68, 0.1); 
+      color: #ef4444; 
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      display: flex; 
+    }
+    .alert-info { 
+      background: var(--accent-bg); 
+      color: var(--accent); 
+      border: 1px solid var(--accent-bg);
+      display: flex; 
+    }
+
+    /* 标签页 */
+    .tabs {
+      display: flex;
+      gap: 0.25rem;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0;
+    }
+    .tab {
+      padding: 0.75rem 1.25rem;
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      border-radius: 8px 8px 0 0;
+      transition: all 0.3s;
+      font-weight: 500;
+    }
+    .tab:hover { 
+      color: var(--text-secondary);
+      background: var(--bg-secondary);
+    }
+    .tab.active { 
+      color: var(--accent); 
+      background: var(--accent-bg);
+      font-weight: 600;
+    }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* 用户信息 */
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      padding: 1.25rem;
+      background: var(--bg-secondary);
+      border-radius: 12px;
+      margin-bottom: 1.5rem;
+    }
+    [data-theme="dark"] .user-info {
+      background: var(--glass-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--glass-border);
+    }
+    .user-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid var(--bg-primary);
+      box-shadow: var(--shadow);
+    }
+    .user-details h3 { 
+      font-size: 1.25rem; 
+      color: var(--text-primary); 
+      margin-bottom: 0.25rem;
+      font-weight: 600;
+    }
+    .user-details p { 
+      color: var(--text-muted); 
+      font-size: 0.9rem;
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      margin-top: 0.5rem;
+    }
+    .status-online { color: #10b981; font-weight: 500; }
+    .status-offline { color: #6b7280; font-weight: 500; }
+    .status-active { color: #10b981; font-weight: 500; }
+    .status-joinme { color: #3b82f6; font-weight: 500; }
+    .status-askme { color: #f59e0b; font-weight: 500; }
+    .status-busy { color: #ef4444; font-weight: 500; }
+
+    /* 好友列表控制栏 */
+    .friends-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      padding: 1rem 1.25rem;
+      background: var(--bg-secondary);
+      border-radius: 12px;
+    }
+    [data-theme="dark"] .friends-controls {
+      background: var(--glass-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--glass-border);
+    }
+    .friends-controls-left {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+    }
+    .friends-controls-right {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .view-toggle-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg-primary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      transition: all 0.3s;
+      font-size: 1rem;
+    }
+    .view-toggle-icon:hover {
+      background: var(--accent-bg);
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    /* 刷新按钮 */
+    .refresh-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg-primary);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.3s;
+      font-size: 0.875rem;
+    }
+    .refresh-btn:hover:not(:disabled) {
+      background: var(--accent-bg);
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+    .refresh-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .refresh-btn.spinning .refresh-icon {
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .refresh-hint {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      margin-left: 0.5rem;
+      display: inline-flex;
+      align-items: center;
+      height: 36px;
+    }
+    .refresh-hint.cooldown {
+      color: #06b6d4;
+      font-weight: 600;
+      font-size: 1rem;
+      background: rgba(6, 182, 212, 0.1);
+      padding: 0.25rem 0.75rem;
+      border-radius: 6px;
+      border: 1px solid rgba(6, 182, 212, 0.3);
+    }
+    .refresh-hint.cooldown .countdown {
+      font-family: monospace;
+      font-size: 1.1rem;
+      margin-left: 0.25rem;
+      color: #06b6d4;
+    }
+
+    /* 关于面板 */
+    .about-panel {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin: 1rem 0;
+      overflow: hidden;
+    }
+    .about-content {
+      padding: 1.5rem;
+    }
+    .about-section {
+      margin-bottom: 1.5rem;
+    }
+    .about-section:last-child {
+      margin-bottom: 0;
+    }
+    .about-section h4 {
+      color: var(--accent);
+      margin-bottom: 0.75rem;
+      font-size: 1rem;
+    }
+    .about-section ul {
+      margin-left: 1.5rem;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+    .about-section li {
+      margin-bottom: 0.5rem;
+    }
+    .about-section p {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      line-height: 1.6;
+      margin-bottom: 0.5rem;
+    }
+    .about-footer {
+      text-align: center;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+      margin-top: 1rem;
+    }
+    .about-footer p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+    .about-footer a {
+      color: var(--accent);
+    }
+
+    /* 公告栏 */
+    .announcement-banner {
+      background: linear-gradient(135deg, rgba(6, 182, 212, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
+      border: 1px solid rgba(6, 182, 212, 0.3);
+      border-radius: 12px;
+      margin: 1rem 0;
+      overflow: hidden;
+    }
+    .announcement-content {
+      padding: 1rem 1.25rem;
+    }
+    .announcement-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid rgba(6, 182, 212, 0.2);
+    }
+    .announcement-icon {
+      font-size: 1.25rem;
+    }
+    .announcement-title {
+      font-weight: 600;
+      color: var(--accent);
+      flex: 1;
+    }
+    .announcement-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      transition: all 0.2s;
+    }
+    .announcement-close:hover {
+      background: rgba(239, 68, 68, 0.1);
+      color: #ef4444;
+    }
+    .announcement-body {
+      font-size: 0.85rem;
+      line-height: 1.6;
+    }
+    .announcement-section {
+      margin-bottom: 0.75rem;
+    }
+    .announcement-section:last-child {
+      margin-bottom: 0;
+    }
+    .announcement-section h4 {
+      color: var(--accent);
+      margin-bottom: 0.4rem;
+      font-size: 0.9rem;
+    }
+    .announcement-section ul {
+      margin-left: 1.25rem;
+      color: var(--text-secondary);
+    }
+    .announcement-section li {
+      margin-bottom: 0.25rem;
+    }
+    .announcement-disclaimer {
+      margin-top: 0.75rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid rgba(6, 182, 212, 0.2);
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .announcement-disclaimer strong {
+      color: #f59e0b;
+    }
+
+    /* 好友网格 */
+    .friends-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 1.25rem;
+    }
+    .friend-card {
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      text-align: center;
+      transition: all 0.3s;
+      position: relative;
+    }
+    [data-theme="dark"] .friend-card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--glass-border);
+    }
+    .friend-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-hover);
+      border-color: var(--accent);
+    }
+    .friend-card.monitoring {
+      border-color: var(--accent);
+      background: var(--accent-bg);
+    }
+    [data-theme="dark"] .friend-card.monitoring {
+      background: rgba(96, 165, 250, 0.1);
+      border-color: var(--accent);
+    }
+    .friend-card.offline {
+      opacity: 0.7;
+    }
+    .friend-card.offline .friend-avatar {
+      filter: grayscale(50%);
+    }
+    .friend-avatar {
+      width: 88px;
+      height: 88px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-bottom: 1rem;
+      border: 3px solid var(--bg-primary);
+      box-shadow: var(--shadow);
+    }
+    .friend-name {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.35rem;
+    }
+    .friend-status {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 0.25rem;
+    }
+    .friend-status-description {
+      font-size: 0.75rem;
+      color: var(--accent);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+      font-style: italic;
+      margin-bottom: 0.25rem;
+      padding: 0.1rem 0.4rem;
+      background: rgba(6, 182, 212, 0.1);
+      border-radius: 4px;
+      display: inline-block;
+    }
+    .friend-world {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* 好友控制 */
+    .friend-controls {
+      position: absolute;
+      top: 0.75rem;
+      left: 0.75rem;
+      right: 0.75rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .friend-monitor-switch {
+      position: relative;
+      display: inline-block;
+      width: 40px;
+      height: 22px;
+    }
+    .friend-monitor-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .friend-monitor-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: var(--border);
+      transition: .3s;
+      border-radius: 22px;
+    }
+    .friend-monitor-slider:before {
+      position: absolute;
+      content: "";
+      height: 16px;
+      width: 16px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .3s;
+      border-radius: 50%;
+    }
+    .friend-monitor-switch input:checked + .friend-monitor-slider {
+      background-color: var(--accent);
+    }
+    .friend-monitor-switch input:checked + .friend-monitor-slider:before {
+      transform: translateX(18px);
+    }
+    .friend-settings-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--bg-primary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      transition: all 0.3s;
+      font-size: 0.85rem;
+    }
+    .friend-settings-btn:hover {
+      background: var(--accent-bg);
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    /* 好友列表视图 */
+    .friends-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .friend-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem;
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      transition: all 0.3s;
+    }
+    .friend-row:hover {
+      border-color: var(--accent);
+      box-shadow: var(--shadow);
+    }
+    .friend-row.monitoring {
+      border-color: var(--accent);
+      background: var(--accent-bg);
+    }
+    .friend-row.offline {
+      opacity: 0.7;
+    }
+    .friend-row.offline .friend-row-avatar {
+      filter: grayscale(50%);
+    }
+    .friend-row-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--bg-primary);
+      box-shadow: var(--shadow);
+    }
+    .friend-row-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+    .friend-row-name {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .friend-row-status {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .friend-row-world {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      max-width: 200px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .friend-row-status-description {
+      font-size: 0.75rem;
+      color: var(--accent);
+      max-width: 200px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-style: italic;
+      padding: 0.05rem 0.3rem;
+      background: rgba(6, 182, 212, 0.1);
+      border-radius: 4px;
+    }
+    .friend-row-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* 历史记录 */
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .history-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem;
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+    .history-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    .history-info {
+      flex: 1;
+    }
+    .history-name {
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.25rem;
+    }
+    .history-change {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+    .history-time {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* 设置区域 */
+    .settings-section {
+      margin-bottom: 2rem;
+    }
+    .settings-section h4 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* 开关样式 */
+    .toggle-switch {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 48px;
+      height: 26px;
+    }
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: var(--border);
+      transition: .3s;
+      border-radius: 26px;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 20px;
+      width: 20px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .3s;
+      border-radius: 50%;
+    }
+    input:checked + .slider {
+      background-color: var(--accent);
+    }
+    input:checked + .slider:before {
+      transform: translateX(22px);
+    }
+
+    /* 模板配置 */
+    .template-section {
+      margin-top: 1.5rem;
+      padding: 1.25rem;
+      background: var(--bg-secondary);
+      border-radius: 12px;
+    }
+    .template-section h4 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 1rem;
+    }
+    .template-help {
+      background: var(--bg-primary);
+      border-left: 3px solid var(--accent);
+      padding: 0.875rem;
+      margin-bottom: 1rem;
+      border-radius: 0 8px 8px 0;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+    .template-help code {
+      background: var(--bg-secondary);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 0.8rem;
+      color: var(--accent);
+    }
+    .template-help ul {
+      margin: 0.5rem 0 0 1.2rem;
+    }
+    .template-help li {
+      margin: 0.25rem 0;
+    }
+    .template-preview {
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-top: 0.5rem;
+      min-height: 200px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .template-preview-title {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+    }
+
+    /* 测试邮件区域 */
+    .test-email-section {
+      margin-top: 1.5rem;
+      padding: 1.25rem;
+      background: var(--bg-secondary);
+      border-radius: 12px;
+    }
+    .test-email-section h4 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.75rem;
+    }
+
+    /* 弹窗 */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      backdrop-filter: blur(4px);
+    }
+    .modal-overlay.active {
+      display: flex;
+    }
+    .modal-content {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      max-width: 400px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: var(--shadow-hover);
+    }
+    [data-theme="dark"] .modal-content {
+      background: var(--glass-bg);
+      backdrop-filter: blur(24px) saturate(160%);
+      border: 1px solid var(--glass-border);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .modal-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    .modal-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .modal-body {
+      margin-bottom: 1.25rem;
+    }
+    .modal-footer {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: flex-end;
+    }
+    .config-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .config-item:last-child {
+      border-bottom: none;
+    }
+    .config-label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    /* 加载动画 */
+    .loading {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s ease-in-out infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* 空状态 */
+    .empty-state {
+      text-align: center;
+      padding: 3rem;
+      color: var(--text-muted);
+    }
+    .empty-state-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      opacity: 0.5;
+    }
+
+    /* 隐藏 */
+    .hidden { display: none !important; }
+
+    /* 响应式 */
+    @media (max-width: 768px) {
+      .container { padding: 1rem; }
+      .header { flex-direction: column; gap: 1rem; }
+      .form-row { grid-template-columns: 1fr; }
+      .friends-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+      .user-info { flex-direction: column; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- 头部 -->
+    <div class="header">
+      <h1 class="header-title">VRC<span>-Notifier</span></h1>
+    </div>
+
+    <!-- 访问密钥验证卡片 -->
+    <div id="accessKeyCard" class="card">
+      <div class="card-title" data-i18n="access.verify.title">访问验证</div>
+      <div id="accessKeyAlert" class="alert"></div>
+      <p style="color: var(--text-secondary); margin-bottom: 1rem; font-size: 0.9rem;" data-i18n="access.verify.desc">
+        请输入访问密钥，密钥已在终端生成，可登录之后自定义关闭
+      </p>
+      <div class="form-group">
+        <label data-i18n="access.verify.key">访问密钥</label>
+        <input type="password" id="accessKeyInput" data-i18n-placeholder="access.verify.placeholder" placeholder="请输入访问密钥">
+      </div>
+      <button id="verifyAccessKeyBtn" class="btn btn-primary btn-block">
+        <span data-i18n="access.verify.btn">验证并继续</span>
+      </button>
+    </div>
+
+    <!-- 登录卡片 -->
+    <div id="loginCard" class="card hidden">
+      <div class="card-title" data-i18n="login.title">登录 VRChat</div>
+      
+      <!-- 游戏兼容性提示 -->
+      <div style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border: 1px solid #3b82f6; border-radius: 12px; padding: 12px 16px; margin-bottom: 20px;">
+        <div style="flex: 1;">
+          <p style="margin: 0 0 6px 0; color: #1e40af; font-size: 13px; font-weight: 600;" data-i18n="login.hint.title">使用提示</p>
+          <p style="margin: 0; color: #1e3a8a; font-size: 12px; line-height: 1.5;" data-i18n="login.hint.content">
+            本工具与 VRChat 游戏使用相同的登录会话。如果您先开启游戏再使用本工具，两者可以共存运行。但如果您先开启工具再登录游戏，工具的会话将被游戏取代而自动停止。
+          </p>
+        </div>
+      </div>
+      
+      <div id="loginAlert" class="alert"></div>
+      <div class="form-group">
+        <label data-i18n="username">用户名/邮箱</label>
+        <input type="text" id="username" data-i18n-placeholder="login.username.placeholder" placeholder="VRChat 用户名/邮箱">
+      </div>
+      <div class="form-group">
+        <label data-i18n="password">密码</label>
+        <input type="password" id="password" data-i18n-placeholder="login.password.placeholder" placeholder="密码">
+      </div>
+      <div class="form-group" style="display: flex; align-items: center; gap: 8px; margin-bottom: 1rem;">
+        <input type="checkbox" id="rememberMe" style="width: auto; margin: 0;">
+        <label for="rememberMe" style="margin: 0; font-weight: normal; cursor: pointer;">
+          <span data-i18n="login.rememberMe">记住我（下次自动登录）</span>
+        </label>
+      </div>
+      <div id="codeSection" class="form-group" style="display: none;">
+        <label data-i18n="login.code">验证码</label>
+        <input type="text" id="code" data-i18n-placeholder="login.code.placeholder" placeholder="邮箱验证码">
+      </div>
+      <button id="sendCodeBtn" class="btn btn-primary btn-block">
+        <span data-i18n="login.sendCode">发送验证码</span>
+      </button>
+      <button id="verifyBtn" class="btn btn-success btn-block" style="display: none; margin-top: 0.5rem;">
+        <span data-i18n="login.verify">登录</span>
+      </button>
+    </div>
+
+    <!-- 主面板 -->
+    <div id="mainPanel" class="hidden">
+      <!-- 公告栏 -->
+      <div id="announcementBanner" class="announcement-banner">
+        <div class="announcement-content">
+          <div class="announcement-header">
+            <span class="announcement-icon">[i]</span>
+            <span class="announcement-title" data-i18n="announcement.title">使用须知</span>
+            <button id="closeAnnouncement" class="announcement-close">&times;</button>
+          </div>
+          <div class="announcement-body">
+            <div class="announcement-section">
+              <h4 data-i18n="announcement.api.title">[API] 请求逻辑</h4>
+              <ul>
+                <li data-i18n="announcement.api.login"><strong>登录时：</strong>仅获取好友列表（2次API），不获取世界信息</li>
+                <li data-i18n="announcement.api.refresh"><strong>手动刷新：</strong>获取好友列表和好友的状态信息</li>
+                <li data-i18n="announcement.api.monitor"><strong>监控检查：</strong>每30秒检查，仅获取被监控好友的世界信息（标准模式下）</li>
+                <li data-i18n="announcement.api.cooldown"><strong>冷却期：</strong>登录/刷新后60秒内暂停所有api请求，防止冲突</li>
+              </ul>
+            </div>
+            <div class="announcement-section">
+              <h4 data-i18n="announcement.tips.title">[!] 重要提示</h4>
+              <ul>
+                <li data-i18n="announcement.tips.limit">最多监控5个好友，仅被监控好友会获取世界信息</li>
+                <li data-i18n="announcement.tips.vrcx"><strong>VRCX兼容性：</strong>如使用VRCX可能产生API冲突，但本工具保留大量API冗余，不会影响VRCX正常使用</li>
+                <li data-i18n="announcement.tips.reset">如遇问题，点击"退出并清除数据"按钮，后手动删除data里的文件</li>
+              </ul>
+            </div>
+            <div class="announcement-disclaimer">
+              <p data-i18n="announcement.disclaimer"><strong>免责声明：</strong>本应用已尽可能规避API使用问题，且使用底层保护，如用户不特意调用API，不会出现账号封禁问题。若账号出现封禁，与本工具无关。（开源社区声明）</p>
+            </div>
+            <div class="announcement-footer" style="margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid rgba(6, 182, 212, 0.2); text-align: center; font-size: 0.8rem; color: var(--text-muted);">
+              <span>VRC-Notifier</span>
+              <span style="margin: 0 0.5rem;">|</span>
+              <span data-i18n="announcement.footer.author">作者: 闪耀金金/ShanyJin</span>
+              <span style="margin: 0 0.5rem;">·</span>
+              <a href="https://shany.cc/" target="_blank" style="color: var(--accent);" data-i18n="announcement.footer.website">作者官网</a>
+              <span style="margin: 0 0.5rem;">·</span>
+              <a href="https://vrchat.community/" target="_blank" style="color: var(--accent);" data-i18n="announcement.footer.community">VRChat社区</a>
+              <span style="margin: 0 0.5rem;">·</span>
+              <a href="https://blog.shany.cc/archives/vrc-notifier" target="_blank" style="color: var(--accent);" data-i18n="announcement.footer.tool">工具介绍</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 标签页 -->
+      <div class="tabs">
+        <button class="tab active" data-tab="friends" data-i18n="tab.friends">好友列表</button>
+        <button class="tab" data-tab="settings" data-i18n="tab.settings">SMTP与设置</button>
+        <button class="tab" data-tab="gotify" data-i18n="tab.gotify">Gotify通知设置</button>
+        <button class="tab" data-tab="webhook" data-i18n="tab.webhook">Webhook推送</button>
+      </div>
+
+      <!-- 好友列表 -->
+      <div id="friendsTab" class="tab-content active">
+        <div class="user-info" id="userInfo">
+          <img id="userAvatar" src="" alt="" class="user-avatar">
+          <div class="user-details">
+            <h3 id="userDisplayName">-</h3>
+            <p id="userStatus">-</p>
+          </div>
+          <!-- 仅监控好友状态模式开关 -->
+          <div class="status-only-mode-toggle" style="margin-left: auto; display: flex; align-items: center; gap: 0.5rem;">
+            <label class="switch">
+              <input type="checkbox" id="statusOnlyModeToggle">
+              <span class="slider round"></span>
+            </label>
+            <span style="font-size: 0.875rem; color: var(--text-secondary);" data-i18n="statusOnly.toggle">仅监控状态模式</span>
+            <button id="statusOnlyModeHelpBtn" class="help-btn" data-i18n-title="statusOnly.help" title="了解仅监控状态模式">?</button>
+          </div>
+          <button id="logoutAndClearBtn" class="btn btn-danger" style="margin-left: 0.5rem;" data-i18n="user.logoutClear">退出并清除数据</button>
+        </div>
+        <div style="margin-top: 0.5rem; text-align: right;">
+          <span id="statusOnlyModeHint" style="font-size: 0.75rem; color: var(--text-muted); display: none;" data-i18n="statusOnly.hint.enabled">
+            已开启"仅监控状态"模式：将不再监控好友世界状态，但监控数量不受限制
+          </span>
+          <span id="normalModeHint" style="font-size: 0.75rem; color: var(--text-muted);" data-i18n="statusOnly.hint.disabled">
+            如遇问题，可点击"退出并清除数据"按钮清除本地缓存后重新登录
+          </span>
+        </div>
+
+        <div class="friends-controls">
+          <div class="friends-controls-left">
+            <button id="unmonitorAllBtn" class="btn btn-secondary" data-i18n="friends.unmonitorAll">全部关闭</button>
+            <button id="refreshFriendsBtn" class="refresh-btn" title="刷新好友列表">
+              <span class="refresh-icon">↻</span>
+              <span data-i18n="friends.refresh">刷新</span>
+            </button>
+            <span class="refresh-hint" data-i18n="friends.refresh.hint">请勿频繁点击</span>
+            <span id="monitorLimitText" style="color: var(--text-secondary); font-size: 0.85rem; margin-left: 12px;" data-i18n="friends.monitor.limit">最多监控5个好友，仅监控好友会刷新状态</span>
+          </div>
+          <div class="friends-controls-right">
+            <button id="aboutBtn" class="view-toggle-icon" title="关于" data-i18n-title="friends.about">?</button>
+            <button id="viewToggleBtn" class="view-toggle-icon" title="切换视图" data-i18n-title="friends.view.toggle">≡</button>
+          </div>
+        </div>
+
+        <!-- 关于/提示展开区域 -->
+        <div id="aboutPanel" class="about-panel" style="display: none;">
+          <div class="about-content">
+            <div class="about-section">
+              <h4 data-i18n="about.title">[功能说明]</h4>
+              <p style="margin-bottom: 0.75rem;" data-i18n="about.desc"><strong>本工具是后台自动监控工具</strong>，用于在后台静默监控您的好友状态变化，并通过邮件和平台通知您。</p>
+              <ul>
+                <li data-i18n="about.feature1">本工具<strong>不会</strong>在前台实时显示好友状态（如有此需求，请使用 <a href="https://vrcx.app/" target="_blank" style="color: var(--accent);">VRCX</a>）</li>
+                <li data-i18n="about.feature2">开启监控后，程序会在后台自动运行，当好友上线/下线/切换世界时发送通知</li>
+                <li data-i18n="about.feature3">您无需保持网页打开，只需保持后端程序运行即可</li>
+                <li data-i18n="about.feature4">建议将本程序部署在服务器或长期运行的设备上</li>
+              </ul>
+            </div>
+            <div class="about-section">
+              <h4 data-i18n="about.api.title">[API] 请求逻辑说明</h4>
+              <ul>
+                <li data-i18n="about.api.login"><strong>登录时：</strong>仅获取在线和离线好友列表（2次API请求），不获取世界信息</li>
+                <li data-i18n="about.api.refresh"><strong>手动刷新时：</strong>获取好友列表信息，刷新后60秒内暂停监控</li>
+                <li data-i18n="about.api.monitor"><strong>监控检查时：</strong>每30秒检查一次，仅获取被监控好友的世界信息（轮询机制，每10秒一个好友）</li>
+                <li data-i18n="about.api.cooldown"><strong>冷却期：</strong>登录或刷新后60秒内暂停所有监控，防止API冲突</li>
+              </ul>
+            </div>
+            <div class="about-section">
+              <h4 data-i18n="about.security.title">[安全] API保护机制</h4>
+              <p style="margin-bottom: 0.75rem;" data-i18n="about.security.desc"><strong>本工具内置多重API保护机制</strong>，确保您的账号安全：</p>
+              <ul>
+                <li data-i18n="about.security.rate"><strong>请求频率限制：</strong>严格遵循VRChat API规范，用户资料≤1次/分钟，好友状态≤2次/分钟，世界信息≤6次/分钟</li>
+                <li data-i18n="about.security.pause"><strong>自动限流保护：</strong>当检测到请求频率过高时，系统自动暂停60秒，防止触发官方限制</li>
+                <li data-i18n="about.security.alert"><strong>实时弹窗提醒：</strong>触发限流保护时，会显示红色弹窗提醒用户</li>
+                <li data-i18n="about.security.conservative"><strong>保守策略：</strong>所有API请求频率均低于官方限制，留有充足安全余量</li>
+                <li data-i18n="about.security.safe">只要正常使用，不疯狂调用API，不会出现账号封禁问题</li>
+              </ul>
+            </div>
+            <div class="about-section">
+              <h4 data-i18n="about.tips.title">[!] 使用提示</h4>
+              <ul>
+                <li data-i18n="about.tips.limit">在标准模式下，最多可监控5个好友，只有被监控的好友才会获取世界信息</li>
+                <li data-i18n="about.tips.reset">如遇问题，可使用"退出并清除数据"按钮清除所有本地数据后重新登录</li>
+                <li data-i18n="about.tips.frequent">请勿频繁刷新好友列表，避免触发API限流</li>
+                <li data-i18n="about.tips.vrcx">与VRCX同时使用时可能产生API冲突，但本工具已预留大量冗余，不会影响VRCX正常使用</li>
+              </ul>
+            </div>
+            <div class="about-section">
+              <h4 data-i18n="about.clear.title">[X] 退出并清除数据</h4>
+              <p data-i18n="about.clear.desc">点击"退出并清除数据"按钮将：</p>
+              <ul>
+                <li data-i18n="about.clear.action1">登出当前账号</li>
+                <li data-i18n="about.clear.action2">提示您手动删除 data 文件夹以清除所有数据</li>
+              </ul>
+              <p style="color: var(--accent); margin-top: 0.5rem;" data-i18n="about.clear.usage">适用于：数据异常、缓存问题、需要重置所有设置时</p>
+            </div>
+            <div class="about-footer" style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border); text-align: center; font-size: 0.85rem; color: var(--text-muted);">
+              <span style="font-weight: 600; color: var(--accent);" data-i18n="about.footer.name">VRC-Notifier</span>
+              <span style="margin: 0 0.5rem;">|</span>
+              <span data-i18n="about.footer.author">作者: 闪耀金金/ShanyJin</span>
+              <div style="margin-top: 0.5rem;">
+                <a href="https://shany.cc/" target="_blank" style="color: var(--text-secondary); margin: 0 0.5rem;" data-i18n="about.footer.website">作者官网</a>
+                <span>·</span>
+                <a href="https://vrchat.community/" target="_blank" style="color: var(--text-secondary); margin: 0 0.5rem;" data-i18n="about.footer.community">VRChat社区</a>
+                <span>·</span>
+                <a href="https://blog.shany.cc/archives/vrc-notifier" target="_blank" style="color: var(--text-secondary); margin: 0 0.5rem;" data-i18n="about.footer.tool">工具介绍</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 仅监控状态模式说明弹窗 -->
+        <div id="statusOnlyModePanel" class="about-panel" style="display: none;">
+          <div class="about-content">
+            <div class="about-section">
+              <h4 data-i18n="statusOnly.title">[?] 什么是"仅监控状态"模式？</h4>
+              <p style="margin-bottom: 0.75rem;" data-i18n="statusOnly.desc">这是一个<strong>简化版监控模式</strong>，只关注好友的在线/离线状态，不关注他们在哪个世界。</p>
+            </div>
+            <div class="about-section">
+              <h4 data-i18n="statusOnly.why.title">[+] 为什么要使用这个模式？</h4>
+              <ul>
+                <li><strong data-i18n="statusOnly.why.friends">好友数量多：</strong><span data-i18n="statusOnly.why.friends.desc">标准模式最多只能监控5个好友，此模式可以监控<strong>所有好友</strong></span></li>
+                <li><strong data-i18n="statusOnly.why.api">节省API配额：</strong><span data-i18n="statusOnly.why.api.desc">不查询世界信息，API调用从8次/分钟降至<strong>2次/分钟</strong></span></li>
+                <li><strong data-i18n="statusOnly.why.simple">简化通知：</strong><span data-i18n="statusOnly.why.simple.desc">只关心好友是否在线和状态，不关心他们在哪个房间</span></li>
+                <li><strong data-i18n="statusOnly.why.load">降低服务器负载：</strong><span data-i18n="statusOnly.why.load.desc">减少API请求，对服务器更友好</span></li>
+              </ul>
+            </div>
+            <div class="about-section">
+              <h4 data-i18n="statusOnly.compare.title">[↻] 两种模式的区别</h4>
+              <table style="width: 100%; border-collapse: collapse; margin-top: 0.5rem;">
+                <tr style="border-bottom: 1px solid var(--border);">
+                  <td style="padding: 0.5rem; color: var(--text-secondary);" data-i18n="statusOnly.compare.feature">功能</td>
+                  <td style="padding: 0.5rem; text-align: center;" data-i18n="statusOnly.compare.standard">标准模式</td>
+                  <td style="padding: 0.5rem; text-align: center;" data-i18n="statusOnly.compare.statusOnly">仅状态模式</td>
+                </tr>
+                <tr style="border-bottom: 1px solid var(--border);">
+                  <td style="padding: 0.5rem;" data-i18n="statusOnly.compare.monitorCount">监控数量</td>
+                  <td style="padding: 0.5rem; text-align: center;" data-i18n="statusOnly.compare.monitorCount.standard">最多5个</td>
+                  <td style="padding: 0.5rem; text-align: center; color: var(--accent);" data-i18n="statusOnly.compare.monitorCount.statusOnly">无限制</td>
+                </tr>
+                <tr style="border-bottom: 1px solid var(--border);">
+                  <td style="padding: 0.5rem;" data-i18n="statusOnly.compare.onlineStatus">在线状态</td>
+                  <td style="padding: 0.5rem; text-align: center;" data-i18n="statusOnly.compare.onlineStatus.support">支持</td>
+                  <td style="padding: 0.5rem; text-align: center;" data-i18n="statusOnly.compare.onlineStatus.support">支持</td>
+                </tr>
+                <tr style="border-bottom: 1px solid var(--border);">
+                  <td style="padding: 0.5rem;" data-i18n="statusOnly.compare.worldChange">世界变化</td>
+                  <td style="padding: 0.5rem; text-align: center;" data-i18n="statusOnly.compare.onlineStatus.support">支持</td>
+                  <td style="padding: 0.5rem; text-align: center; color: var(--text-muted);" data-i18n="statusOnly.compare.worldChange.no">不支持</td>
+                </tr>
+                <tr>
+                  <td style="padding: 0.5rem;" data-i18n="statusOnly.compare.apiCalls">API调用</td>
+                  <td style="padding: 0.5rem; text-align: center;" data-i18n="statusOnly.compare.apiCalls.standard">8次/分钟</td>
+                  <td style="padding: 0.5rem; text-align: center; color: var(--accent);" data-i18n="statusOnly.compare.apiCalls.statusOnly">2次/分钟</td>
+                </tr>
+              </table>
+            </div>
+            <div class="about-section">
+              <h4 data-i18n="statusOnly.how.title">[!] 如何使用？</h4>
+              <ol style="margin-left: 1rem; line-height: 1.8;">
+                <li data-i18n="statusOnly.how.step1">点击"仅监控状态"开关开启此模式</li>
+                <li data-i18n="statusOnly.how.step2">确认切换（会自动关闭当前所有监控的好友）</li>
+                <li data-i18n="statusOnly.how.step3">点击"一键关闭监控全部好友"按钮关闭所有好友</li>
+                <li data-i18n="statusOnly.how.step4">完成！您将收到所有好友的上线/下线通知</li>
+              </ol>
+            </div>
+            <div class="about-section">
+              <h4 data-i18n="statusOnly.warning.title">[⚠] 注意事项</h4>
+              <ul>
+                <li data-i18n="statusOnly.warning.reset">切换模式时会<strong>自动关闭所有监控的好友</strong>，需要重新选择</li>
+                <li data-i18n="statusOnly.warning.noWorld">此模式下<strong>不会收到世界变化通知</strong>（如好友切换房间）</li>
+                <li data-i18n="statusOnly.warning.useStandard">如果想监控特定好友的世界变化，请使用<strong>标准模式</strong></li>
+                <li data-i18n="statusOnly.warning.switch">两种模式可以随时切换，但每次切换都会重置监控列表</li>
+              </ul>
+            </div>
+            <div style="text-align: center; margin-top: 1rem;">
+              <button id="closeStatusOnlyModePanel" class="btn btn-primary" data-i18n="statusOnly.close">我知道了</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="friendsList" class="friends-grid"></div>
+      </div>
+
+      <!-- 通知设置 -->
+      <div id="settingsTab" class="tab-content">
+        <div class="settings-section">
+          <h4 data-i18n="settings.tool.title">工具设置</h4>
+          <div class="toggle-switch">
+            <label class="switch">
+              <input type="checkbox" id="accessKeyEnabled">
+              <span class="slider"></span>
+            </label>
+            <span data-i18n="settings.accessKey.enable">启用访问密钥保护</span>
+          </div>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem; margin-left: 3.5rem;" data-i18n="settings.accessKey.desc">
+            开启后，访问网页时需要先输入访问密钥，公网部署建议开启，本地部署可选择性关闭。
+          </p>
+          <div id="accessKeyDisplaySection" style="margin-top: 1rem; display: none;">
+            <div class="form-group">
+              <label data-i18n="settings.accessKey.current">当前访问密钥（记得保存）</label>
+              <div style="display: flex; gap: 0.5rem;">
+                <input type="text" id="currentAccessKey" readonly style="flex: 1; font-family: monospace;">
+                <button id="copyAccessKeyBtn" class="btn btn-secondary" style="width: auto; padding: 0.75rem 1rem;" data-i18n="settings.accessKey.copy">复制</button>
+                <button id="regenerateAccessKeyBtn" class="btn btn-secondary" style="width: auto; padding: 0.75rem 1rem;" data-i18n="settings.accessKey.regenerate">重新生成</button>
+              </div>
+            </div>
+            <p style="font-size: 0.8rem; color: #ef4444; margin-top: 0.5rem;" data-i18n="settings.accessKey.warning">
+              警告：重新生成密钥后，之前保存的密钥将失效，需要重新输入！
+            </p>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h4 data-i18n="settings.email.title">邮件通知配置</h4>
+          <div class="form-group">
+            <label data-i18n="settings.notifyEmail">接收通知的邮箱</label>
+            <input type="email" id="notifyEmail" data-i18n-placeholder="settings.notifyEmail.placeholder" placeholder="example@email.com">
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h4 data-i18n="settings.smtp.title">SMTP 服务器配置</h4>
+          <div class="form-row">
+            <div class="form-group">
+              <label data-i18n="settings.smtp.host">SMTP 服务器地址</label>
+              <input type="text" id="smtpHost" data-i18n-placeholder="settings.smtp.host.placeholder" placeholder="smtp.qq.com">
+            </div>
+            <div class="form-group">
+              <label data-i18n="settings.smtp.port">端口</label>
+              <input type="number" id="smtpPort" placeholder="465" value="465">
+            </div>
+          </div>
+          <div class="form-group">
+            <label data-i18n="settings.smtp.user">SMTP 用户名</label>
+            <input type="text" id="smtpUser" data-i18n-placeholder="settings.smtp.user.placeholder" placeholder="your-email@email.com">
+          </div>
+          <div class="form-group">
+            <label data-i18n="settings.smtp.pass">SMTP 密码/授权码</label>
+            <input type="password" id="smtpPass" data-i18n-placeholder="settings.smtp.pass.placeholder" placeholder="您的邮箱授权码">
+          </div>
+          <div class="toggle-switch">
+            <label class="switch">
+              <input type="checkbox" id="smtpSecure">
+              <span class="slider"></span>
+            </label>
+            <span data-i18n="settings.smtp.secure">使用 SSL/TLS 加密连接（推荐使用）</span>
+          </div>
+        </div>
+
+        <div class="template-section">
+          <h4 data-i18n="settings.template.title">邮件通知格式配置</h4>
+          <div class="template-help">
+            <strong data-i18n="settings.template.help">可用变量：</strong>
+            <ul>
+              <li><code>{friendName}</code> - <span data-i18n="settings.template.var.friendName">好友名称</span></li>
+              <li><code>{changeType}</code> - <span data-i18n="settings.template.var.changeType">变化类型（好友上线/好友下线/切换世界/状态更新/自定义状态）</span></li>
+              <li><code>{changeDescription}</code> - <span data-i18n="settings.template.var.changeDescription">变化描述文本</span></li>
+              <li><code>{changeDetailsHtml}</code> - <span data-i18n="settings.template.var.changeDetailsHtml">变化详情HTML表格（自动根据变化类型生成）</span></li>
+              <li><code>{oldStatus}</code> - <span data-i18n="settings.template.var.oldStatus">变化前的状态</span></li>
+              <li><code>{newStatus}</code> - <span data-i18n="settings.template.var.newStatus">变化后的状态</span></li>
+              <li><code>{oldStatusDescription}</code> - <span data-i18n="settings.template.var.oldStatusDescription">变化前的自定义状态</span></li>
+              <li><code>{newStatusDescription}</code> - <span data-i18n="settings.template.var.newStatusDescription">变化后的自定义状态</span></li>
+              <li><code>{oldWorld}</code> - <span data-i18n="settings.template.var.oldWorld">之前所在的世界</span></li>
+              <li><code>{newWorld}</code> - <span data-i18n="settings.template.var.newWorld">当前所在的世界</span></li>
+              <li><code>{timestamp}</code> - <span data-i18n="settings.template.var.timestamp">状态变化时间</span></li>
+              <li><code>{avatarUrl}</code> - <span data-i18n="settings.template.var.avatarUrl">好友头像URL</span></li>
+            </ul>
+            <p style="margin-top: 0.75rem; color: var(--text-muted); font-size: 0.8rem;" data-i18n="settings.template.hint">
+              提示：如不需要自定义模板，可留空使用系统默认模板。系统会根据变化类型自动显示相应的变化详情。
+            </p>
+          </div>
+          <div class="form-group">
+            <label data-i18n="settings.template.subject">邮件主题模板</label>
+            <input type="text" id="emailSubjectTemplate" data-i18n-placeholder="settings.template.subject.placeholder" placeholder="[vrc-notifier] {changeType}: {friendName}">
+          </div>
+          <div class="form-group">
+            <label data-i18n="settings.template.body">邮件内容模板（支持HTML，留空使用默认模板）</label>
+            <textarea id="emailBodyTemplate" rows="8" data-i18n-placeholder="settings.template.body.placeholder" placeholder="留空将使用系统默认模板，自动显示好友状态变化详情..."></textarea>
+          </div>
+          <div class="template-preview-title" data-i18n="settings.template.preview.single">邮件模板预览：</div>
+          
+          <!-- 单条通知模板预览 -->
+          <div class="preview-section">
+            <h5 style="margin: 1rem 0 0.5rem 0; color: var(--accent); font-size: 0.9rem;" data-i18n="settings.template.preview.singleTitle">[单条通知模板] - 好友上线/下线/状态变化</h5>
+            <div id="singleEmailPreview" class="template-preview">
+              <p style="color: var(--text-muted);" data-i18n="loading">加载中...</p>
+            </div>
+          </div>
+          
+          <!-- 批量通知模板预览 -->
+          <div class="preview-section">
+            <h5 style="margin: 1rem 0 0.5rem 0; color: var(--accent); font-size: 0.9rem;" data-i18n="settings.template.preview.batchTitle">[批量通知模板] - 多个好友世界变化</h5>
+            <div id="batchEmailPreview" class="template-preview">
+              <p style="color: var(--text-muted);" data-i18n="loading">加载中...</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="test-email-section">
+          <h4 data-i18n="settings.test.title">发送测试邮件</h4>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;" data-i18n="settings.test.desc">
+            配置完成后，点击按钮发送测试邮件验证 SMTP 设置是否正确。
+          </p>
+          <div class="form-group">
+            <label data-i18n="settings.test.email">测试邮箱地址（可选）</label>
+            <input type="email" id="testEmail" data-i18n-placeholder="settings.test.email.placeholder" placeholder="默认使用接收邮箱">
+          </div>
+          <button id="sendTestEmailBtn" class="btn btn-primary btn-block">
+            <span data-i18n="settings.test.btn">发送测试邮件</span>
+          </button>
+        </div>
+
+        <button id="saveSettingsBtn" class="btn btn-success btn-block" style="margin-top: 1.5rem;">
+          <span data-i18n="settings.save">保存所有设置</span>
+        </button>
+      </div>
+
+      <!-- Gotify通知设置 -->
+      <div id="gotifyTab" class="tab-content">
+        <div class="card">
+          <div class="card-title" data-i18n="gotify.title">Gotify 推送通知配置</div>
+          
+          <div class="settings-section">
+            <h4 data-i18n="gotify.server.title">Gotify 服务配置</h4>
+            <div class="toggle-switch">
+              <label class="switch">
+                <input type="checkbox" id="gotifyEnabled">
+                <span class="slider"></span>
+              </label>
+              <span data-i18n="gotify.enable">启用 Gotify 推送通知</span>
+            </div>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem; margin-left: 3.5rem;" data-i18n="gotify.enable.desc">
+              开启后，当好友状态变化时，将通过 Gotify 服务器推送通知到您的设备。
+            </p>
+          </div>
+
+          <div class="settings-section">
+            <h4 data-i18n="gotify.server.title">服务器配置</h4>
+            <div class="form-group">
+              <label data-i18n="gotify.server.url">Gotify 服务器地址</label>
+              <input type="text" id="gotifyServerUrl" data-i18n-placeholder="gotify.server.url.placeholder" placeholder="https://gotify.example.com 或 http://192.168.1.100:8080">
+              <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;" data-i18n="gotify.server.url.hint">
+                您的 Gotify 服务器地址，例如: http://your-server:8080
+              </p>
+            </div>
+            <div class="form-group">
+              <label data-i18n="gotify.appToken">应用 Token</label>
+              <input type="password" id="gotifyAppToken" data-i18n-placeholder="gotify.appToken.placeholder" placeholder="在 Gotify 网页端创建应用后获取的 Token">
+              <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;" data-i18n="gotify.appToken.hint">
+                在 Gotify 的 Apps 页面创建应用后获取的 Token
+              </p>
+            </div>
+            <div class="form-group">
+              <label data-i18n="gotify.priority">消息优先级 (1-10)</label>
+              <input type="number" id="gotifyPriority" placeholder="5" value="5" min="1" max="10">
+              <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;" data-i18n="gotify.priority.hint">
+                优先级越高，通知越明显。建议: 普通通知=5，重要通知=8-10
+              </p>
+            </div>
+          </div>
+
+          <div class="template-section">
+            <h4 data-i18n="gotify.template.title">Gotify 推送模板配置（可选）</h4>
+            <div class="template-help">
+              <strong data-i18n="gotify.template.smart.title">智能推送标题（默认）</strong>
+              <p style="margin-top: 0.5rem; margin-bottom: 0.75rem;" data-i18n="gotify.template.smart.desc">
+                系统已内置智能标题生成，无需配置模板即可使用：
+              </p>
+              <ul>
+                <li><strong data-i18n="gotify.template.smart.online">上线： 好友名称 上线了</strong></li>
+                <li><strong data-i18n="gotify.template.smart.offline">下线： 好友名称 下线了</strong></li>
+                <li><strong data-i18n="gotify.template.smart.world">切换世界： 好友名称: 旧世界 → 新世界</strong></li>
+                <li><strong data-i18n="gotify.template.smart.status">状态变化： 好友名称: 旧状态 → 新状态</strong></li>
+              </ul>
+              <p style="margin-top: 0.75rem; color: var(--text-muted); font-size: 0.8rem;" data-i18n="gotify.template.smart.hint">
+                建议：使用默认智能标题即可，标题会直接显示变化内容，无需点开就能知道发生了什么。
+              </p>
+              <strong style="display: block; margin-top: 1rem;" data-i18n="gotify.template.vars.title">自定义模板变量（高级用户）：</strong>
+              <ul style="margin-top: 0.5rem;">
+                <li><code>{friendName}</code> - <span data-i18n="gotify.template.var.friendName">好友名称</span></li>
+                <li><code>{changeType}</code> - <span data-i18n="gotify.template.var.changeType">变化类型（上线/下线/切换世界/状态变化/自定义状态）</span></li>
+                <li><code>{oldStatus}</code> - <span data-i18n="gotify.template.var.oldStatus">变化前的状态</span></li>
+                <li><code>{newStatus}</code> - <span data-i18n="gotify.template.var.newStatus">变化后的状态</span></li>
+                <li><code>{oldStatusDescription}</code> - <span data-i18n="gotify.template.var.oldStatusDescription">变化前的自定义状态</span></li>
+                <li><code>{newStatusDescription}</code> - <span data-i18n="gotify.template.var.newStatusDescription">变化后的自定义状态</span></li>
+                <li><code>{oldWorld}</code> - <span data-i18n="gotify.template.var.oldWorld">之前所在的世界</span></li>
+                <li><code>{newWorld}</code> - <span data-i18n="gotify.template.var.newWorld">当前所在的世界</span></li>
+                <li><code>{timestamp}</code> - <span data-i18n="gotify.template.var.timestamp">状态变化时间</span></li>
+              </ul>
+              <p style="margin-top: 0.75rem; color: var(--text-muted); font-size: 0.8rem;" data-i18n="gotify.template.markdown">
+                提示：消息内容支持 Markdown 格式，可以使用 **粗体**、*斜体*、- 列表等语法。
+              </p>
+            </div>
+            <div class="form-group">
+              <label data-i18n="gotify.template.custom.title">自定义推送标题模板（留空使用智能标题）</label>
+              <input type="text" id="gotifyTitleTemplate" data-i18n-placeholder="gotify.template.custom.title.placeholder" placeholder="留空使用智能标题: 好友名称 上线了">
+            </div>
+            <div class="form-group">
+              <label data-i18n="gotify.template.custom.message">自定义推送内容模板（留空使用默认格式）</label>
+              <textarea id="gotifyMessageTemplate" rows="6" data-i18n-placeholder="gotify.template.custom.message.placeholder" placeholder="留空使用默认格式，包含状态、世界等详细信息..."></textarea>
+            </div>
+            
+            <div class="template-preview-title" data-i18n="gotify.template.preview.title">推送预览：</div>
+            
+            <!-- 单条推送预览 -->
+            <div class="preview-section">
+              <h5 style="margin: 1rem 0 0.5rem 0; color: var(--accent); font-size: 0.9rem;" data-i18n="gotify.template.preview.single">[单条推送预览] - 好友上线</h5>
+              <div id="gotifySinglePreview" class="template-preview" style="font-family: monospace; white-space: pre-wrap;">
+                <p style="color: var(--text-muted);" data-i18n="loading">加载中...</p>
+              </div>
+            </div>
+            
+            <!-- 批量推送预览 -->
+            <div class="preview-section">
+              <h5 style="margin: 1rem 0 0.5rem 0; color: var(--accent); font-size: 0.9rem;" data-i18n="gotify.template.preview.batch">[批量推送预览] - 多个好友状态变化</h5>
+              <div id="gotifyBatchPreview" class="template-preview" style="font-family: monospace; white-space: pre-wrap;">
+                <p style="color: var(--text-muted);" data-i18n="loading">加载中...</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="test-email-section">
+            <h4 data-i18n="gotify.test.title">发送测试推送</h4>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;" data-i18n="gotify.test.desc">
+              配置完成后，点击按钮发送测试推送验证 Gotify 设置是否正确。
+            </p>
+            <button id="sendTestGotifyBtn" class="btn btn-primary btn-block">
+              <span data-i18n="gotify.test.btn">发送测试推送</span>
+            </button>
+          </div>
+
+          <div class="settings-section" style="margin-top: 2rem;">
+            <h4 data-i18n="gotify.help.title">使用说明</h4>
+            <div class="template-help">
+              <strong data-i18n="gotify.help.what">什么是 Gotify?</strong>
+              <p style="margin-top: 0.5rem;" data-i18n="gotify.help.what.desc">
+                Gotify 是一个开源的自托管消息推送服务器，可以将通知推送到您的 Android 设备或浏览器。
+                您需要在服务器上部署 Gotify，然后在手机上下载 Gotify App 来接收推送。
+              </p>
+              <strong style="display: block; margin-top: 1rem;" data-i18n="gotify.help.steps.title">配置步骤:</strong>
+              <ol style="margin-left: 1.2rem; margin-top: 0.5rem;">
+                <li data-i18n="gotify.help.step1">在您的服务器上部署 Gotify（Docker 部署最简单）</li>
+                <li data-i18n="gotify.help.step2">登录 Gotify Web 界面，创建一个新的 Application</li>
+                <li data-i18n="gotify.help.step3">复制生成的 Token，填写到上面的"应用 Token"字段</li>
+                <li data-i18n="gotify.help.step4">填写您的 Gotify 服务器地址</li>
+                <li data-i18n="gotify.help.step5">点击"发送测试推送"验证配置</li>
+                <li data-i18n="gotify.help.step6">在手机上下载 Gotify App，登录后即可接收推送</li>
+              </ol>
+              <strong style="display: block; margin-top: 1rem;" data-i18n="gotify.help.docker.title">Docker 快速部署 Gotify:</strong>
+              <code style="display: block; margin-top: 0.5rem; padding: 0.75rem; background: var(--bg-secondary); border-radius: 4px; font-size: 0.8rem;">
+                docker run -p 8080:80 -v /var/gotify/data:/app/data gotify/server
+              </code>
+            </div>
+          </div>
+
+          <button id="saveGotifySettingsBtn" class="btn btn-success btn-block" style="margin-top: 1.5rem;">
+            <span data-i18n="gotify.save">保存 Gotify 设置</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 通用 Webhook 设置 -->
+      <div id="webhookTab" class="tab-content">
+        <div class="card">
+          <div class="card-title" data-i18n="webhook.title">通用 Webhook 推送配置</div>
+          
+          <div class="settings-section">
+            <h4 data-i18n="webhook.basic.title">基础配置</h4>
+            <div class="toggle-switch">
+              <label class="switch">
+                <input type="checkbox" id="webhookEnabled">
+                <span class="slider"></span>
+              </label>
+              <div class="toggle-label">
+                <span data-i18n="webhook.enable">启用 Webhook 推送</span>
+                <span class="toggle-hint" data-i18n="webhook.enable.hint">开启后可接收通用 Webhook 推送通知</span>
+              </div>
+            </div>
+            
+            <div class="form-group" style="margin-top: 1.5rem;">
+              <label data-i18n="webhook.url">Webhook URL</label>
+              <input type="url" id="webhookUrl" data-i18n-placeholder="webhook.url.placeholder" placeholder="https://example.com/api/webhook">
+              <p class="form-hint" data-i18n="webhook.url.hint">接收推送通知的 HTTP 端点地址</p>
+            </div>
+            
+            <div class="form-row" style="grid-template-columns: 1fr 2fr;">
+              <div class="form-group">
+                <label data-i18n="webhook.method">请求方法</label>
+                <select id="webhookMethod">
+                  <option value="POST">POST</option>
+                  <option value="PUT">PUT</option>
+                  <option value="PATCH">PATCH</option>
+                  <option value="GET">GET</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label data-i18n="webhook.contentType">Content-Type</label>
+                <select id="webhookContentType">
+                  <option value="application/json">application/json</option>
+                  <option value="application/x-www-form-urlencoded">application/x-www-form-urlencoded</option>
+                  <option value="text/plain">text/plain</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <h4 data-i18n="webhook.headers.title">自定义请求头（可选）</h4>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;" data-i18n="webhook.headers.desc">
+              用于身份验证或其他自定义请求头，JSON 格式，例如：{"Authorization": "Bearer xxx"}
+            </p>
+            <div class="form-group">
+              <textarea id="webhookHeaders" rows="3" data-i18n-placeholder="webhook.headers.placeholder" placeholder='{"Authorization": "Bearer your-token"}'></textarea>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <h4 data-i18n="webhook.template.title">请求体模板（可选）</h4>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;" data-i18n="webhook.template.desc">
+              自定义 Webhook 请求体，留空使用默认 JSON 格式。支持以下变量：
+            </p>
+            <div class="template-help" style="margin-bottom: 1rem;">
+              <ul>
+                <li><code>{friendName}</code> - <span data-i18n="webhook.template.var.friendName">好友名称</span></li>
+                <li><code>{changeType}</code> - <span data-i18n="webhook.template.var.changeType">变化类型（上线/下线/切换世界/状态变化/自定义状态）</span></li>
+                <li><code>{oldStatus}</code> - <span data-i18n="webhook.template.var.oldStatus">变化前状态</span></li>
+                <li><code>{newStatus}</code> - <span data-i18n="webhook.template.var.newStatus">变化后状态</span></li>
+                <li><code>{oldStatusDescription}</code> - <span data-i18n="webhook.template.var.oldStatusDescription">变化前的自定义状态</span></li>
+                <li><code>{newStatusDescription}</code> - <span data-i18n="webhook.template.var.newStatusDescription">变化后的自定义状态</span></li>
+                <li><code>{oldWorld}</code> - <span data-i18n="webhook.template.var.oldWorld">之前世界</span></li>
+                <li><code>{newWorld}</code> - <span data-i18n="webhook.template.var.newWorld">当前世界</span></li>
+                <li><code>{timestamp}</code> - <span data-i18n="webhook.template.var.timestamp">时间戳</span></li>
+                <li><code>{avatarUrl}</code> - <span data-i18n="webhook.template.var.avatarUrl">头像URL</span></li>
+                <li><code>{eventType}</code> - <span data-i18n="webhook.template.var.eventType">事件类型</span></li>
+              </ul>
+            </div>
+            <div class="form-group">
+              <label data-i18n="webhook.template.body">请求体模板（JSON 或自定义格式）</label>
+              <textarea id="webhookBodyTemplate" rows="10" data-i18n-placeholder="webhook.template.body.placeholder" placeholder='{
+  "event": "{eventType}",
+  "timestamp": "{timestamp}",
+  "friend": {
+    "name": "{friendName}",
+    "avatar": "{avatarUrl}"
+  },
+  "change": {
+    "type": "{changeType}",
+    "oldStatus": "{oldStatus}",
+    "newStatus": "{newStatus}",
+    "oldWorld": "{oldWorld}",
+    "newWorld": "{newWorld}"
+  }
+}'></textarea>
+            </div>
+          </div>
+
+          <div class="test-email-section">
+            <h4 data-i18n="webhook.test.title">发送测试 Webhook</h4>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;" data-i18n="webhook.test.desc">
+              配置完成后，点击按钮发送测试请求验证 Webhook 设置是否正确。
+            </p>
+            <button id="sendTestWebhookBtn" class="btn btn-primary btn-block">
+              <span data-i18n="webhook.test.btn">发送测试 Webhook</span>
+            </button>
+          </div>
+
+          <div class="settings-section" style="margin-top: 2rem;">
+            <h4 data-i18n="webhook.help.title">使用说明</h4>
+            <div class="template-help">
+              <strong data-i18n="webhook.help.what">什么是通用 Webhook?</strong>
+              <p style="margin-top: 0.5rem;" data-i18n="webhook.help.what.desc">
+                通用 Webhook 允许您将通知推送到任何支持 HTTP 请求的第三方服务，如 Discord、Slack、企业微信、钉钉、飞书等。
+                只需配置目标 URL 和请求格式，即可实现消息推送。
+              </p>
+              <strong style="display: block; margin-top: 1rem;" data-i18n="webhook.help.examples.title">支持的推送平台示例:</strong>
+              <ul style="margin-top: 0.5rem;">
+                <li><strong>Discord</strong> - 使用 Discord Webhook URL</li>
+                <li><strong>Slack</strong> - 使用 Slack Incoming Webhook</li>
+                <li><strong>企业微信</strong> - 使用企业微信群机器人 Webhook</li>
+                <li><strong>钉钉</strong> - 使用钉钉群机器人 Webhook</li>
+                <li><strong>飞书</strong> - 使用飞书群机器人 Webhook</li>
+                <li><strong>自定义服务</strong> - 任何支持 HTTP 的接口</li>
+              </ul>
+            </div>
+          </div>
+
+          <button id="saveWebhookSettingsBtn" class="btn btn-success btn-block" style="margin-top: 1.5rem;">
+            <span data-i18n="webhook.save">保存 Webhook 设置</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 语言切换按钮 -->
+  <button id="langToggle" class="lang-toggle" title="切换语言">EN</button>
+
+  <!-- 主题切换按钮 -->
+  <button id="themeToggle" class="theme-toggle" title="切换主题">◐</button>
+
+  <!-- 好友设置弹窗 -->
+  <div id="friendSettingsModal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <img id="modalFriendAvatar" src="" alt="" class="modal-avatar">
+        <h3 id="modalFriendName" class="modal-title"></h3>
+      </div>
+      <div class="modal-body">
+        <div class="config-item">
+          <span class="config-label" data-i18n="friend.modal.notifyOnline">上线通知</span>
+          <label class="switch">
+            <input type="checkbox" id="modalNotifyOnline">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="config-item">
+          <span class="config-label" data-i18n="friend.modal.notifyOffline">下线通知</span>
+          <label class="switch">
+            <input type="checkbox" id="modalNotifyOffline">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="config-item">
+          <span class="config-label" data-i18n="friend.modal.notifyStatus">状态改变通知</span>
+          <label class="switch">
+            <input type="checkbox" id="modalNotifyStatus">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="config-item">
+          <span class="config-label" data-i18n="friend.modal.notifyWorld">世界改变通知</span>
+          <label class="switch">
+            <input type="checkbox" id="modalNotifyWorld">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="modalCancelBtn" class="btn btn-secondary" data-i18n="cancel">取消</button>
+        <button id="modalSaveBtn" class="btn btn-primary" data-i18n="save">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 关于弹窗 -->
+  <div id="aboutModal" class="modal" style="display: none;">
+    <div class="modal-content" style="max-width: 600px;">
+      <div class="modal-header">
+        <h3>关于 VRC-Notifier</h3>
+        <button class="modal-close" id="aboutModalClose">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="margin-bottom: 1.5rem;">
+          <h4 style="color: var(--accent); margin-bottom: 0.75rem;">📡 API 请求逻辑说明</h4>
+          <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 8px; font-size: 0.9rem; line-height: 1.6;">
+            <p style="margin-bottom: 0.75rem;"><strong>1. 登录时</strong></p>
+            <ul style="margin-left: 1.5rem; margin-bottom: 0.75rem; color: var(--text-secondary);">
+              <li>获取在线好友列表（1次API请求）</li>
+              <li>获取离线好友列表（1次API请求）</li>
+              <li>不获取任何世界信息</li>
+            </ul>
+            
+            <p style="margin-bottom: 0.75rem;"><strong>2. 手动刷新好友列表时</strong></p>
+            <ul style="margin-left: 1.5rem; margin-bottom: 0.75rem; color: var(--text-secondary);">
+              <li>获取在线好友列表（1次API请求）</li>
+              <li>获取离线好友列表（1次API请求）</li>
+              <li>获取世界信息（仅前10个好友）</li>
+              <li>刷新后60秒内暂停监控</li>
+            </ul>
+            
+            <p style="margin-bottom: 0.75rem;"><strong>3. 监控检查时（每30秒）</strong></p>
+            <ul style="margin-left: 1.5rem; margin-bottom: 0.75rem; color: var(--text-secondary);">
+              <li>获取在线好友列表（1次API请求）</li>
+              <li>仅获取被监控好友的世界信息</li>
+              <li>轮询机制：每10秒检查一个被监控好友</li>
+            </ul>
+            
+            <p style="margin-bottom: 0.5rem;"><strong>4. 冷却期机制</strong></p>
+            <ul style="margin-left: 1.5rem; color: var(--text-secondary);">
+              <li>登录后60秒内暂停监控</li>
+              <li>手动刷新后60秒内暂停监控</li>
+              <li>防止API请求冲突和限流</li>
+            </ul>
+          </div>
+        </div>
+        
+        <div style="margin-bottom: 1rem;">
+          <h4 style="color: var(--accent); margin-bottom: 0.5rem;">[!] 使用提示</h4>
+          <ul style="margin-left: 1.5rem; font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6;">
+            <li>最多可监控5个好友</li>
+            <li>只有被监控的好友才会获取世界信息</li>
+            <li>如遇问题，可使用"退出并清除数据"按钮重置</li>
+            <li>请勿频繁刷新好友列表，避免触发API限流</li>
+          </ul>
+        </div>
+        
+        <div style="text-align: center; padding-top: 1rem; border-top: 1px solid var(--border);">
+          <p style="font-size: 0.85rem; color: var(--text-muted);">
+            VRC-Notifier | 作者: 闪耀金金
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // API 基础地址
+    const API_BASE = window.location.origin + '/api';
+
+    // 全局状态
+    let currentUserId = localStorage.getItem('vrc_user_id');
+    let currentUserData = null;
+    let needCode = false;
+    let tempSessionId = null;
+    let friendMonitorConfigs = {};
+    let currentEditingFriend = null;
+    let isListView = false;
+    let currentFriends = [];
+
+    // DOM 元素
+    const accessKeyCard = document.getElementById('accessKeyCard');
+    const loginCard = document.getElementById('loginCard');
+    const mainPanel = document.getElementById('mainPanel');
+    const accessKeyAlert = document.getElementById('accessKeyAlert');
+    const loginAlert = document.getElementById('loginAlert');
+    const sendCodeBtn = document.getElementById('sendCodeBtn');
+    const verifyBtn = document.getElementById('verifyBtn');
+    const codeSection = document.getElementById('codeSection');
+    const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+    const statusOnlyModeToggle = document.getElementById('statusOnlyModeToggle');
+    const unmonitorAllBtn = document.getElementById('unmonitorAllBtn');
+    const viewToggleBtn = document.getElementById('viewToggleBtn');
+    const friendSettingsModal = document.getElementById('friendSettingsModal');
+    const modalCancelBtn = document.getElementById('modalCancelBtn');
+    const modalSaveBtn = document.getElementById('modalSaveBtn');
+    const sendTestEmailBtn = document.getElementById('sendTestEmailBtn');
+    const emailSubjectTemplate = document.getElementById('emailSubjectTemplate');
+    const emailBodyTemplate = document.getElementById('emailBodyTemplate');
+    const emailPreview = document.getElementById('emailPreview');
+    const testEmail = document.getElementById('testEmail');
+    const themeToggle = document.getElementById('themeToggle');
+    
+    // Gotify 相关元素
+    const gotifyEnabled = document.getElementById('gotifyEnabled');
+    const gotifyServerUrl = document.getElementById('gotifyServerUrl');
+    const gotifyAppToken = document.getElementById('gotifyAppToken');
+    const gotifyPriority = document.getElementById('gotifyPriority');
+    const gotifyTitleTemplate = document.getElementById('gotifyTitleTemplate');
+    const gotifyMessageTemplate = document.getElementById('gotifyMessageTemplate');
+    const sendTestGotifyBtn = document.getElementById('sendTestGotifyBtn');
+    const saveGotifySettingsBtn = document.getElementById('saveGotifySettingsBtn');
+    
+    // Webhook 相关元素
+    const webhookEnabled = document.getElementById('webhookEnabled');
+    const webhookUrl = document.getElementById('webhookUrl');
+    const webhookMethod = document.getElementById('webhookMethod');
+    const webhookHeaders = document.getElementById('webhookHeaders');
+    const webhookBodyTemplate = document.getElementById('webhookBodyTemplate');
+    const webhookContentType = document.getElementById('webhookContentType');
+    const sendTestWebhookBtn = document.getElementById('sendTestWebhookBtn');
+    const saveWebhookSettingsBtn = document.getElementById('saveWebhookSettingsBtn');
+
+    // 主题切换
+    function initTheme() {
+      const savedTheme = localStorage.getItem('vrc-theme') || 'light';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+      updateThemeIcon(savedTheme);
+    }
+
+    function toggleTheme() {
+      const currentTheme = document.documentElement.getAttribute('data-theme');
+      const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', newTheme);
+      localStorage.setItem('vrc-theme', newTheme);
+      updateThemeIcon(newTheme);
+    }
+
+    function updateThemeIcon(theme) {
+      themeToggle.textContent = theme === 'light' ? '◑' : '◐';
+    }
+
+    themeToggle.addEventListener('click', toggleTheme);
+    initTheme();
+
+    // 语言切换
+    const langToggle = document.getElementById('langToggle');
+    langToggle.addEventListener('click', () => {
+      const newLang = i18n.toggleLanguage();
+      // 重新渲染好友列表以更新状态文本
+      if (currentFriends.length > 0) {
+        renderFriends(currentFriends);
+      }
+    });
+    // 初始化语言
+    i18n.init();
+
+    // SSE事件连接 - 接收实时通知（包括限流提醒）
+    let eventSource = null;
+    let rateLimitToastTimeout = null;
+
+    function connectEventStream() {
+      if (!currentUserId) return;
+      
+      // 关闭已有连接
+      if (eventSource) {
+        eventSource.close();
+      }
+
+      // 创建SSE连接
+      eventSource = new EventSource(`${API_BASE}/events`, {
+        headers: { 'X-User-Id': currentUserId }
+      });
+
+      eventSource.onopen = () => {
+        console.log('[SSE] 已连接到事件流');
+      };
+
+      eventSource.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          console.log('[SSE] 收到消息:', data);
+
+          if (data.type === 'rate_limit_triggered') {
+            // 显示限流警告弹窗
+            showRateLimitToast(data);
+          } else if (data.type === 'rate_limit_active') {
+            // 连接时已处于限流状态
+            showRateLimitToast({
+              ...data,
+              message: `系统正处于API限流保护状态，剩余 ${data.remainingSeconds} 秒`
+            });
+          } else if (data.type === 'session_expired') {
+            // 会话过期，显示弹窗并退出登录
+            showSessionExpiredModal(data.details);
+          } else if (data.type === 'game_login_detected') {
+            // 检测到游戏登录，显示特殊弹窗
+            showGameLoginModal(data.details);
+          }
+        } catch (e) {
+          console.error('[SSE] 解析消息失败:', e);
+        }
+      };
+
+      eventSource.onerror = (error) => {
+        console.error('[SSE] 连接错误:', error);
+        // 5秒后重连
+        setTimeout(() => {
+          if (currentUserId) connectEventStream();
+        }, 5000);
+      };
+    }
+
+    // 显示限流警告弹窗
+    function showRateLimitToast(data) {
+      // 移除已有的弹窗
+      const existingToast = document.getElementById('rateLimitToast');
+      if (existingToast) {
+        existingToast.remove();
+      }
+      
+      // 清除之前的定时器
+      if (rateLimitToastTimeout) {
+        clearTimeout(rateLimitToastTimeout);
+      }
+
+      // 创建弹窗
+      const toast = document.createElement('div');
+      toast.id = 'rateLimitToast';
+      toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: white;
+        padding: 16px 20px;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);
+        z-index: 10000;
+        max-width: 350px;
+        font-size: 14px;
+        line-height: 1.5;
+        animation: slideInRight 0.3s ease;
+      `;
+      
+      toast.innerHTML = `
+        <div style="display: flex; align-items: flex-start; gap: 12px;">
+          <span style="font-size: 24px;">[!]</span>
+          <div>
+            <div style="font-weight: 600; margin-bottom: 4px;">API限流保护已触发</div>
+            <div style="opacity: 0.9; font-size: 13px;">${data.message}</div>
+            <div style="margin-top: 8px; font-size: 12px; opacity: 0.8;">
+              触发类型: ${data.apiType || '未知'} | 暂停时长: ${data.pauseDuration || 60}秒
+            </div>
+          </div>
+        </div>
+        <button onclick="this.parentElement.remove()" style="
+          position: absolute;
+          top: 8px;
+          right: 8px;
+          background: none;
+          border: none;
+          color: white;
+          cursor: pointer;
+          font-size: 18px;
+          opacity: 0.7;
+        ">×</button>
+      `;
+
+      // 添加动画样式
+      if (!document.getElementById('rateLimitAnimation')) {
+        const style = document.createElement('style');
+        style.id = 'rateLimitAnimation';
+        style.textContent = `
+          @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+          }
+        `;
+        document.head.appendChild(style);
+      }
+
+      document.body.appendChild(toast);
+
+      // 60秒后自动移除
+      rateLimitToastTimeout = setTimeout(() => {
+        if (toast.parentElement) {
+          toast.style.animation = 'slideInRight 0.3s ease reverse';
+          setTimeout(() => toast.remove(), 300);
+        }
+      }, (data.pauseDuration || 60) * 1000);
+    }
+
+    // 显示会话过期弹窗
+    function showSessionExpiredModal(details) {
+      // 移除已有的弹窗
+      const existingModal = document.getElementById('sessionExpiredModal');
+      if (existingModal) {
+        existingModal.remove();
+      }
+
+      // 创建弹窗
+      const modal = document.createElement('div');
+      modal.id = 'sessionExpiredModal';
+      modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 20000;
+        animation: fadeIn 0.3s ease;
+      `;
+
+      const reasonsList = details.reasons.map(r => `<li style="margin-bottom: 8px; color: #666;">${r}</li>`).join('');
+
+      modal.innerHTML = `
+        <div style="
+          background: white;
+          border-radius: 16px;
+          padding: 32px;
+          max-width: 480px;
+          width: 90%;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+          animation: slideUp 0.3s ease;
+        ">
+          <div style="text-align: center; margin-bottom: 24px;">
+            <div style="
+              width: 64px;
+              height: 64px;
+              background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              margin: 0 auto 16px;
+              font-size: 32px;
+            ">⚠️</div>
+            <h2 style="color: #1f2937; margin: 0 0 8px 0; font-size: 24px;">${details.title}</h2>
+            <p style="color: #6b7280; margin: 0; font-size: 14px;">好友监控已停止运行</p>
+          </div>
+
+          <div style="margin-bottom: 24px;">
+            <p style="color: #374151; margin-bottom: 16px; line-height: 1.6;">${details.content}</p>
+            
+            <div style="background: #f9fafb; border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+              <h3 style="color: #1f2937; margin: 0 0 12px 0; font-size: 14px; font-weight: 600;">可能的原因：</h3>
+              <ul style="margin: 0; padding-left: 20px; font-size: 13px;">
+                ${reasonsList}
+              </ul>
+            </div>
+
+            <div style="background: #eff6ff; border-left: 4px solid #3b82f6; padding: 12px 16px; border-radius: 0 8px 8px 0;">
+              <p style="color: #1e40af; margin: 0; font-size: 14px; font-weight: 500;">💡 ${details.action}</p>
+            </div>
+          </div>
+
+          <button id="sessionExpiredBtn" style="
+            width: 100%;
+            padding: 14px 24px;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+          " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(59, 130, 246, 0.4)';" 
+          onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+            退出登录
+          </button>
+        </div>
+      `;
+
+      // 添加动画样式
+      if (!document.getElementById('sessionExpiredAnimation')) {
+        const style = document.createElement('style');
+        style.id = 'sessionExpiredAnimation';
+        style.textContent = `
+          @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+          }
+          @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+          }
+        `;
+        document.head.appendChild(style);
+      }
+
+      document.body.appendChild(modal);
+
+      // 绑定退出登录按钮事件
+      document.getElementById('sessionExpiredBtn').addEventListener('click', () => {
+        modal.remove();
+        logout();
+      });
+
+      // 断开SSE连接
+      disconnectEventStream();
+    }
+
+    // 显示游戏登录检测弹窗
+    function showGameLoginModal(details) {
+      // 移除已有的弹窗
+      const existingModal = document.getElementById('gameLoginModal');
+      if (existingModal) {
+        existingModal.remove();
+      }
+
+      // 创建弹窗
+      const modal = document.createElement('div');
+      modal.id = 'gameLoginModal';
+      modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 30000;
+        animation: fadeIn 0.3s ease;
+      `;
+
+      const stepsList = details.steps.items.map((step, index) => 
+        `<li style="margin-bottom: 12px; color: #4b5563; display: flex; align-items: flex-start; gap: 8px;">
+          <span style="background: #3b82f6; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0;">${index + 1}</span>
+          <span>${step}</span>
+        </li>`
+      ).join('');
+
+      modal.innerHTML = `
+        <div style="
+          background: white;
+          border-radius: 20px;
+          padding: 40px;
+          max-width: 520px;
+          width: 90%;
+          max-height: 90vh;
+          overflow-y: auto;
+          box-shadow: 0 25px 80px rgba(0, 0, 0, 0.4);
+          animation: slideUp 0.3s ease;
+        ">
+          <div style="text-align: center; margin-bottom: 28px;">
+            <div style="
+              width: 80px;
+              height: 80px;
+              background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              margin: 0 auto 20px;
+              font-size: 40px;
+              box-shadow: 0 8px 20px rgba(245, 158, 11, 0.3);
+            ">🎮</div>
+            <h2 style="color: #1f2937; margin: 0 0 8px 0; font-size: 26px; font-weight: 700;">${details.title}</h2>
+            <p style="color: #f59e0b; margin: 0; font-size: 15px; font-weight: 600;">${details.subtitle}</p>
+          </div>
+
+          <div style="margin-bottom: 24px;">
+            <p style="color: #374151; margin-bottom: 20px; line-height: 1.7; font-size: 15px;">${details.content}</p>
+            
+            <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 16px; padding: 20px; margin-bottom: 20px; border: 1px solid #fcd34d;">
+              <h3 style="color: #92400e; margin: 0 0 12px 0; font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+                <span>💡</span> ${details.explanation.title}
+              </h3>
+              <p style="margin: 0; color: #78350f; font-size: 14px; line-height: 1.6;">${details.explanation.text}</p>
+            </div>
+
+            <div style="background: #f0f9ff; border-radius: 16px; padding: 20px; margin-bottom: 20px; border: 1px solid #bae6fd;">
+              <h3 style="color: #0369a1; margin: 0 0 16px 0; font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+                <span>🎮</span> ${details.steps.title}
+              </h3>
+              <ol style="margin: 0; padding: 0; list-style: none; font-size: 14px;">
+                ${stepsList}
+              </ol>
+            </div>
+
+            <div style="background: #fef2f2; border-left: 5px solid #ef4444; padding: 16px 20px; border-radius: 0 12px 12px 0;">
+              <p style="margin: 0; color: #991b1b; font-size: 14px; font-weight: 600; display: flex; align-items: flex-start; gap: 10px;">
+                <span style="font-size: 18px;">${details.note.icon}</span>
+                <span>${details.note.text}</span>
+              </p>
+            </div>
+          </div>
+
+          <button id="gameLoginBtn" style="
+            width: 100%;
+            padding: 16px 28px;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 17px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+          " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(59, 130, 246, 0.4)';" 
+          onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(59, 130, 246, 0.3)';">
+            ${details.action}
+          </button>
+        </div>
+      `;
+
+      // 添加动画样式
+      if (!document.getElementById('gameLoginAnimation')) {
+        const style = document.createElement('style');
+        style.id = 'gameLoginAnimation';
+        style.textContent = `
+          @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+          }
+          @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+          }
+        `;
+        document.head.appendChild(style);
+      }
+
+      document.body.appendChild(modal);
+
+      // 绑定按钮事件
+      document.getElementById('gameLoginBtn').addEventListener('click', () => {
+        modal.remove();
+        logout();
+      });
+
+      // 断开SSE连接
+      disconnectEventStream();
+    }
+
+    // 断开SSE连接
+    function disconnectEventStream() {
+      if (eventSource) {
+        eventSource.close();
+        eventSource = null;
+        console.log('[SSE] 已断开连接');
+      }
+    }
+
+    // 检查访问密钥状态
+    async function checkAccessKeyStatus() {
+      try {
+        const res = await fetch(`${API_BASE}/access-key-status`);
+        const data = await res.json();
+        
+        if (data.code === 0) {
+          if (!data.data.enabled) {
+            // 访问密钥已禁用，直接显示登录界面
+            accessKeyCard.classList.add('hidden');
+            if (currentUserId) {
+              showMainPanel();
+              loadUserInfo();
+              // 重新打开网页时不自动刷新好友列表，使用缓存
+              loadFriendsFromCache();
+              loadSettings();
+              loadHistory();
+            } else {
+              loginCard.classList.remove('hidden');
+            }
+          } else {
+            // 访问密钥已启用，检查本地存储
+            const savedAccessKey = localStorage.getItem('vrc_access_key');
+            if (savedAccessKey) {
+              // 验证保存的密钥
+              const verifyRes = await fetch(`${API_BASE}/verify-access-key`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ accessKey: savedAccessKey })
+              });
+              const verifyData = await verifyRes.json();
+              
+              if (verifyData.code === 0) {
+                // 密钥有效，显示登录界面
+                accessKeyCard.classList.add('hidden');
+                if (currentUserId) {
+                  showMainPanel();
+                  loadUserInfo();
+                  // 重新打开网页时不自动刷新好友列表，使用缓存
+                  loadFriendsFromCache();
+                  loadSettings();
+                  loadHistory();
+                } else {
+                  loginCard.classList.remove('hidden');
+                }
+              } else {
+                // 密钥无效，清除并显示密钥输入
+                localStorage.removeItem('vrc_access_key');
+              }
+            }
+            // 否则保持访问密钥输入界面显示
+          }
+        }
+      } catch (err) {
+        console.error('检查访问密钥状态失败:', err);
+      }
+    }
+
+    // 验证访问密钥
+    document.getElementById('verifyAccessKeyBtn').addEventListener('click', async () => {
+      const accessKey = document.getElementById('accessKeyInput').value.trim();
+      
+      if (!accessKey) {
+        showAlert(accessKeyAlert, 'error', i18n.t('access.verify.required'));
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_BASE}/verify-access-key`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ accessKey })
+        });
+        const data = await res.json();
+
+        if (data.code === 0) {
+          // 保存密钥到本地
+          localStorage.setItem('vrc_access_key', accessKey);
+          showAlert(accessKeyAlert, 'success', i18n.t('access.verify.success'));
+          
+          // 切换到登录界面
+          accessKeyCard.classList.add('hidden');
+          if (currentUserId) {
+            showMainPanel();
+            loadUserInfo();
+            // 重新打开网页时不自动刷新好友列表，使用缓存
+            loadFriendsFromCache();
+            loadSettings();
+            loadHistory();
+          } else {
+            loginCard.classList.remove('hidden');
+          }
+        } else {
+          showAlert(accessKeyAlert, 'error', data.msg || i18n.t('access.verify.error'));
+        }
+      } catch (err) {
+        showAlert(accessKeyAlert, 'error', i18n.t('access.verify.error') + ': ' + err.message);
+      }
+    });
+
+    // 初始化
+document.addEventListener('DOMContentLoaded', async () => {
+  // 首先尝试自动登录
+  const savedUserId = localStorage.getItem('vrc_user_id');
+  const rememberMe = localStorage.getItem('vrc_remember_me');
+  
+  if (savedUserId && rememberMe === 'true') {
+    console.log('[初始化] 检测到记住我状态，尝试自动登录...');
+    try {
+      const res = await fetch(`${API_BASE}/auto-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: savedUserId })
+      });
+      const data = await res.json();
+      
+      if (data.code === 0) {
+        console.log('[初始化] 自动登录成功:', data.data.displayName);
+        currentUserId = data.data.userId;
+        currentUserData = data.data;
+
+        // 显示主面板
+        accessKeyCard.classList.add('hidden');
+        loginCard.classList.add('hidden');
+        showMainPanel();
+        loadUserInfo();
+        // 自动登录后使用缓存加载好友列表，避免触发API限流
+        loadFriendsFromCache();
+        loadSettings();
+        loadHistory();
+
+        // 显示自动登录成功提示
+        setTimeout(() => {
+          showToast('自动登录成功，欢迎回来！', 'success');
+        }, 500);
+        return; // 自动登录成功，跳过访问密钥检查
+      } else {
+        console.log('[初始化] 自动登录失败:', data.msg);
+        // 自动登录失败，清除保存的状态
+        localStorage.removeItem('vrc_user_id');
+        localStorage.removeItem('vrc_remember_me');
+      }
+    } catch (err) {
+      console.error('[初始化] 自动登录请求失败:', err);
+      localStorage.removeItem('vrc_user_id');
+      localStorage.removeItem('vrc_remember_me');
+    }
+  }
+  
+  // 如果没有自动登录或自动登录失败，检查是否有保存的用户名
+  if (!currentUserId) {
+    try {
+      const res = await fetch(`${API_BASE}/check-saved-login`);
+      const data = await res.json();
+      
+      if (data.code === 0 && data.data.username) {
+        // 自动填充用户名
+        document.getElementById('username').value = data.data.username;
+        console.log('[初始化] 已自动填充用户名:', data.data.username);
+        
+        // 如果有保存的登录状态，自动勾选记住我
+        if (data.data.hasSavedLogin) {
+          document.getElementById('rememberMe').checked = true;
+          // 保存userId到localStorage用于自动登录
+          if (data.data.userId) {
+            localStorage.setItem('vrc_user_id', data.data.userId);
+            localStorage.setItem('vrc_remember_me', 'true');
+          }
+        }
+        
+        // 聚焦到密码输入框
+        setTimeout(() => {
+          document.getElementById('password').focus();
+        }, 100);
+      }
+    } catch (err) {
+      console.error('[初始化] 检查保存的登录状态失败:', err);
+    }
+  }
+  
+  // 检查访问密钥
+  checkAccessKeyStatus();
+});
+
+    // 显示提示
+    function showAlert(element, type, message) {
+      element.className = `alert alert-${type}`;
+      element.innerHTML = message;
+      element.style.display = 'flex';
+      setTimeout(() => { element.style.display = 'none'; }, 5000);
+    }
+
+    // 显示 Toast 提示
+    function showToast(message, type = 'info') {
+      // 移除已有的 toast
+      const existingToast = document.getElementById('toast-notification');
+      if (existingToast) {
+        existingToast.remove();
+      }
+
+      const toast = document.createElement('div');
+      toast.id = 'toast-notification';
+      
+      const colors = {
+        success: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+        error: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+        info: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+        warning: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'
+      };
+
+      toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: ${colors[type] || colors.info};
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        z-index: 10000;
+        font-size: 14px;
+        font-weight: 500;
+        animation: slideDown 0.3s ease;
+      `;
+      toast.textContent = message;
+
+      // 添加动画样式
+      if (!document.getElementById('toast-animation')) {
+        const style = document.createElement('style');
+        style.id = 'toast-animation';
+        style.textContent = `
+          @keyframes slideDown {
+            from { transform: translateX(-50%) translateY(-100%); opacity: 0; }
+            to { transform: translateX(-50%) translateY(0); opacity: 1; }
+          }
+        `;
+        document.head.appendChild(style);
+      }
+
+      document.body.appendChild(toast);
+
+      // 3秒后自动移除
+      setTimeout(() => {
+        if (toast.parentElement) {
+          toast.style.animation = 'slideDown 0.3s ease reverse';
+          setTimeout(() => toast.remove(), 300);
+        }
+      }, 3000);
+    }
+
+    // 获取状态显示文本（根据当前语言）
+    function getStatusText(status) {
+      const statusMap = {
+        'offline': i18n.t('friend.status.offline', 'Offline'),
+        'active': i18n.t('friend.status.active', 'Active'),
+        'join me': i18n.t('friend.status.joinme', 'Join Me'),
+        'ask me': i18n.t('friend.status.askme', 'Ask Me'),
+        'busy': i18n.t('friend.status.busy', 'Busy')
+      };
+      return statusMap[status] || status;
+    }
+
+    // 显示主面板
+    function showMainPanel() {
+      loginCard.classList.add('hidden');
+      mainPanel.classList.remove('hidden');
+
+      // 显示公告栏（登录后）
+      const announcementBanner = document.getElementById('announcementBanner');
+      announcementBanner.style.display = 'block';
+      
+      // 连接SSE事件流
+      connectEventStream();
+    }
+
+    // 公告栏关闭按钮
+    const closeAnnouncement = document.getElementById('closeAnnouncement');
+    closeAnnouncement.addEventListener('click', () => {
+      const announcementBanner = document.getElementById('announcementBanner');
+      announcementBanner.style.display = 'none';
+    });
+
+    // 显示登录卡片
+    function showLoginCard() {
+      loginCard.classList.remove('hidden');
+      mainPanel.classList.add('hidden');
+      currentUserId = null;
+      currentUserData = null;
+      needCode = false;
+      localStorage.removeItem('vrc_user_id');
+      
+      // 断开SSE连接
+      disconnectEventStream();
+    }
+
+    // 发送验证码按钮
+    sendCodeBtn.addEventListener('click', async () => {
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const rememberMe = document.getElementById('rememberMe').checked;
+
+      if (!username || !password) {
+        showAlert(loginAlert, 'error', i18n.t('login.error.empty'));
+        return;
+      }
+
+      sendCodeBtn.disabled = true;
+      sendCodeBtn.innerHTML = '<span class="loading"></span> ' + i18n.t('login.sending');
+
+      try {
+        const res = await fetch(`${API_BASE}/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password, rememberMe })
+        });
+        const data = await res.json();
+
+        if (data.code === 1) {
+          needCode = true;
+          tempSessionId = data.tempSessionId;
+          showAlert(loginAlert, 'info', data.msg);
+          codeSection.style.display = 'block';
+          sendCodeBtn.style.display = 'none';
+          verifyBtn.style.display = 'block';
+          document.getElementById('code').focus();
+        } else if (data.code === 0) {
+          currentUserId = data.data.userId;
+          currentUserData = data.data;
+          localStorage.setItem('vrc_user_id', currentUserId);
+          // 保存记住我状态
+          if (data.data.rememberMe) {
+            localStorage.setItem('vrc_remember_me', 'true');
+          } else {
+            localStorage.removeItem('vrc_remember_me');
+          }
+          showAlert(loginAlert, 'success', i18n.t('login.success'));
+          setTimeout(async () => {
+            showMainPanel();
+            loadUserInfo();
+            // 登录时自动刷新一次好友列表（使用首次刷新接口，不触发冷却期）
+            await initialLoadFriends();
+          }, 1000);
+        } else {
+          showAlert(loginAlert, 'error', data.msg);
+        }
+      } catch (err) {
+        showAlert(loginAlert, 'error', i18n.t('login.error.network') + ': ' + err.message);
+      } finally {
+        sendCodeBtn.disabled = false;
+        sendCodeBtn.innerHTML = '<span>' + i18n.t('login.sendCode') + '</span>';
+      }
+    });
+
+    // 验证登录按钮
+    verifyBtn.addEventListener('click', async () => {
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const code = document.getElementById('code').value.trim();
+      const rememberMe = document.getElementById('rememberMe').checked;
+
+      if (!code) {
+        showAlert(loginAlert, 'error', i18n.t('login.code.placeholder'));
+        return;
+      }
+
+      verifyBtn.disabled = true;
+      verifyBtn.innerHTML = '<span class="loading"></span> ' + i18n.t('login.verifying');
+
+      try {
+        const res = await fetch(`${API_BASE}/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password, code, tempSessionId, rememberMe })
+        });
+        const data = await res.json();
+
+        if (data.code === 0) {
+          currentUserId = data.data.userId;
+          currentUserData = data.data;
+          tempSessionId = null;
+          localStorage.setItem('vrc_user_id', currentUserId);
+          // 保存记住我状态
+          if (data.data.rememberMe) {
+            localStorage.setItem('vrc_remember_me', 'true');
+          } else {
+            localStorage.removeItem('vrc_remember_me');
+          }
+          showAlert(loginAlert, 'success', i18n.t('login.success'));
+          setTimeout(async () => {
+            showMainPanel();
+            loadUserInfo();
+            // 登录时自动刷新一次好友列表（使用首次刷新接口，不触发冷却期）
+            await initialLoadFriends();
+            loadSettings();
+          }, 1000);
+        } else {
+          showAlert(loginAlert, 'error', data.msg);
+        }
+      } catch (err) {
+        showAlert(loginAlert, 'error', i18n.t('login.error.network') + ': ' + err.message);
+      } finally {
+        verifyBtn.disabled = false;
+        verifyBtn.innerHTML = '<span>' + i18n.t('login.verify') + '</span>';
+      }
+    });
+
+    // 仅监控好友状态模式切换
+    let currentStatusOnlyMode = false;
+    
+    statusOnlyModeToggle.addEventListener('change', async () => {
+      const newMode = statusOnlyModeToggle.checked;
+      
+      // 确认切换模式
+      const confirmMsg = newMode 
+        ? '切换到"仅监控状态"模式将关闭所有当前监控的好友，是否继续？'
+        : '切换到"标准模式"将关闭所有当前监控的好友，是否继续？';
+      
+      if (!confirm(confirmMsg)) {
+        statusOnlyModeToggle.checked = currentStatusOnlyMode;
+        return;
+      }
+      
+      try {
+        // 先关闭所有监控的好友
+        const closeRes = await fetch(`${API_BASE}/friends/monitor-all`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'X-User-Id': currentUserId
+          },
+          body: JSON.stringify({ 
+            userId: currentUserId,
+            enable: false
+          })
+        });
+        
+        const closeData = await closeRes.json();
+        if (closeData.code !== 0) {
+          statusOnlyModeToggle.checked = currentStatusOnlyMode;
+          showAlert(loginAlert, 'error', '关闭监控好友失败: ' + closeData.msg);
+          return;
+        }
+        
+        // 切换模式
+        const res = await fetch(`${API_BASE}/settings`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'X-User-Id': currentUserId
+          },
+          body: JSON.stringify({ 
+            userId: currentUserId,
+            statusOnlyMode: newMode
+          })
+        });
+        
+        const data = await res.json();
+        if (data.code === 0) {
+          currentStatusOnlyMode = newMode;
+          updateStatusOnlyModeUI(newMode);
+          loadFriends(); // 刷新好友列表
+          showAlert(loginAlert, 'success', newMode ? '已开启仅监控状态模式，已关闭所有监控好友' : '已关闭仅监控状态模式，已关闭所有监控好友');
+        } else {
+          statusOnlyModeToggle.checked = currentStatusOnlyMode;
+          showAlert(loginAlert, 'error', '切换模式失败: ' + data.msg);
+        }
+      } catch (err) {
+        statusOnlyModeToggle.checked = currentStatusOnlyMode;
+        showAlert(loginAlert, 'error', '切换模式失败: ' + err.message);
+      }
+    });
+    
+    // 更新仅状态模式UI
+    function updateStatusOnlyModeUI(enabled) {
+      const statusOnlyHint = document.getElementById('statusOnlyModeHint');
+      const normalHint = document.getElementById('normalModeHint');
+      const monitorLimitText = document.getElementById('monitorLimitText');
+      const worldChangeCheckbox = document.getElementById('modalWorldChange');
+      
+      if (enabled) {
+        statusOnlyHint.style.display = 'inline';
+        normalHint.style.display = 'none';
+        if (monitorLimitText) monitorLimitText.style.display = 'none';
+        if (worldChangeCheckbox) {
+          worldChangeCheckbox.checked = false;
+          worldChangeCheckbox.disabled = true;
+        }
+      } else {
+        statusOnlyHint.style.display = 'none';
+        normalHint.style.display = 'inline';
+        if (monitorLimitText) monitorLimitText.style.display = 'inline';
+        if (worldChangeCheckbox) {
+          worldChangeCheckbox.disabled = false;
+        }
+      }
+    }
+
+    // 退出并提示用户手动清除数据
+    const logoutAndClearBtn = document.getElementById('logoutAndClearBtn');
+    logoutAndClearBtn.addEventListener('click', async () => {
+      if (!confirm(i18n.t('logout.clear.confirm'))) return;
+
+      logoutAndClearBtn.disabled = true;
+
+      try {
+        // 调用登出接口，同时清除记住我状态
+        await fetch(`${API_BASE}/logout`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: currentUserId, clearRememberMe: true })
+        });
+
+        // 清除本地记住我状态
+        localStorage.removeItem('vrc_remember_me');
+
+        // 显示手动清除数据提示
+        alert(i18n.t('logout.clear.success'));
+      } catch (err) {
+        console.error('Logout failed:', err);
+        alert(i18n.t('logout.clear.error'));
+      } finally {
+        showLoginCard();
+        logoutAndClearBtn.disabled = false;
+      }
+    });
+
+    // 加载用户信息
+    async function loadUserInfo() {
+      try {
+        const res = await fetch(`${API_BASE}/me`, {
+          headers: { 'X-User-Id': currentUserId }
+        });
+        const data = await res.json();
+
+        if (data.code === 0) {
+          const user = data.data;
+          document.getElementById('userDisplayName').textContent = user.displayName;
+          document.getElementById('userStatus').textContent = user.status || user.state || '未知状态';
+          document.getElementById('userAvatar').src = user.avatarUrl || '';
+        } else {
+          console.error('获取用户信息失败:', data.msg);
+        }
+      } catch (err) {
+        console.error('加载用户信息失败:', err);
+      }
+    }
+
+    // 加载好友监控配置
+    async function loadFriendMonitorConfigs() {
+      try {
+        const res = await fetch(`${API_BASE}/friends/monitor-config`, {
+          headers: { 'X-User-Id': currentUserId }
+        });
+        const data = await res.json();
+        if (data.code === 0) {
+          friendMonitorConfigs = data.data.configs || {};
+        }
+      } catch (err) {
+        console.error('加载监控配置失败:', err);
+      }
+    }
+
+    // 更新好友监控状态
+    async function updateFriendMonitor(friendId, enabled) {
+      try {
+        const config = friendMonitorConfigs[friendId] || {};
+        const res = await fetch(`${API_BASE}/friends/monitor-config`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: currentUserId,
+            friendId: friendId,
+            monitorEnabled: enabled,
+            notifyOnline: config.notifyOnline !== undefined ? config.notifyOnline : true,
+            notifyOffline: config.notifyOffline !== undefined ? config.notifyOffline : true,
+            notifyStatusChange: config.notifyStatusChange !== undefined ? config.notifyStatusChange : true,
+            notifyWorldChange: config.notifyWorldChange !== undefined ? config.notifyWorldChange : true
+          })
+        });
+        const data = await res.json();
+        if (data.code === 0) {
+          if (!friendMonitorConfigs[friendId]) friendMonitorConfigs[friendId] = {};
+          friendMonitorConfigs[friendId].monitorEnabled = enabled;
+          return true;
+        }
+        return false;
+      } catch (err) {
+        console.error('更新监控状态失败:', err);
+        return false;
+      }
+    }
+
+    // 打开好友设置弹窗
+    function openFriendSettings(friend) {
+      currentEditingFriend = friend;
+      const config = friendMonitorConfigs[friend.vrchatId] || {};
+      
+      document.getElementById('modalFriendAvatar').src = friend.avatarUrl || 'https://via.placeholder.com/48';
+      document.getElementById('modalFriendName').textContent = friend.displayName;
+      document.getElementById('modalNotifyOnline').checked = config.notifyOnline !== false;
+      document.getElementById('modalNotifyOffline').checked = config.notifyOffline !== false;
+      document.getElementById('modalNotifyStatus').checked = config.notifyStatusChange !== false;
+      document.getElementById('modalNotifyWorld').checked = config.notifyWorldChange !== false;
+      
+      friendSettingsModal.classList.add('active');
+    }
+
+    // 关闭好友设置弹窗
+    function closeFriendSettings() {
+      friendSettingsModal.classList.remove('active');
+      currentEditingFriend = null;
+    }
+
+    // 保存好友设置
+    async function saveFriendSettings() {
+      if (!currentEditingFriend) return;
+
+      const config = friendMonitorConfigs[currentEditingFriend.vrchatId] || {};
+      const monitorEnabled = config.monitorEnabled || false;
+
+      try {
+        const res = await fetch(`${API_BASE}/friends/monitor-config`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: currentUserId,
+            friendId: currentEditingFriend.vrchatId,
+            monitorEnabled: monitorEnabled,
+            notifyOnline: document.getElementById('modalNotifyOnline').checked,
+            notifyOffline: document.getElementById('modalNotifyOffline').checked,
+            notifyStatusChange: document.getElementById('modalNotifyStatus').checked,
+            notifyWorldChange: document.getElementById('modalNotifyWorld').checked
+          })
+        });
+        const data = await res.json();
+        if (data.code === 0) {
+          friendMonitorConfigs[currentEditingFriend.vrchatId] = {
+            monitorEnabled: monitorEnabled,
+            notifyOnline: document.getElementById('modalNotifyOnline').checked,
+            notifyOffline: document.getElementById('modalNotifyOffline').checked,
+            notifyStatusChange: document.getElementById('modalNotifyStatus').checked,
+            notifyWorldChange: document.getElementById('modalNotifyWorld').checked
+          };
+          alert(i18n.t('friend.modal.saved'));
+          closeFriendSettings();
+        }
+      } catch (err) {
+        alert(i18n.t('friend.modal.saveFail') + ': ' + err.message);
+      }
+    }
+
+
+
+    // 获取状态CSS类（每个状态不同颜色）
+    function getStatusClass(status) {
+      const classMap = {
+        'offline': 'status-offline',
+        'active': 'status-active',
+        'join me': 'status-joinme',
+        'ask me': 'status-askme',
+        'busy': 'status-busy'
+      };
+      return classMap[status] || 'status-active';
+    }
+
+    // 渲染网格视图
+    function renderGridView(friends, friendsList) {
+      friendsList.className = 'friends-grid';
+      friendsList.innerHTML = friends.map(friend => {
+        const config = friendMonitorConfigs[friend.vrchatId] || {};
+        const isMonitoring = config.monitorEnabled || false;
+        const isOffline = friend.status === 'offline';
+        const statusClass = getStatusClass(friend.status);
+        const statusText = getStatusText(friend.status);
+        const monitorTitle = isMonitoring ? i18n.t('friend.monitor.disable') : i18n.t('friend.monitor.enable');
+        return `
+        <div class="friend-card ${isMonitoring ? 'monitoring' : ''} ${isOffline ? 'offline' : ''}" data-friend-id="${friend.vrchatId}">
+          <div class="friend-controls">
+            <label class="friend-monitor-switch" title="${monitorTitle}">
+              <input type="checkbox" class="friend-monitor-toggle" data-friend-id="${friend.vrchatId}" ${isMonitoring ? 'checked' : ''}>
+              <span class="friend-monitor-slider"></span>
+            </label>
+            <button class="friend-settings-btn" data-friend-id="${friend.vrchatId}" title="${i18n.t('friend.settings')}">⋮</button>
+          </div>
+          <img src="${friend.avatarUrl || 'https://via.placeholder.com/72'}" alt="${friend.displayName}" class="friend-avatar">
+          <div class="friend-name">${friend.displayName}</div>
+          <div class="friend-status ${statusClass}">${statusText}</div>
+          ${friend.statusDescription ? `<div class="friend-status-description" title="${friend.statusDescription}">${friend.statusDescription}</div>` : ''}
+          ${friend.worldName ? `<div class="friend-world" title="${friend.worldName}">${friend.worldName}</div>` : ''}
+        </div>
+      `}).join('');
+
+      bindFriendEvents(friends, friendsList, 'friend-card');
+    }
+
+    // 渲染列表视图
+    function renderListView(friends, friendsList) {
+      friendsList.className = 'friends-list';
+      friendsList.innerHTML = friends.map(friend => {
+        const config = friendMonitorConfigs[friend.vrchatId] || {};
+        const isMonitoring = config.monitorEnabled || false;
+        const isOffline = friend.status === 'offline';
+        const statusClass = getStatusClass(friend.status);
+        const statusText = getStatusText(friend.status);
+        const monitorTitle = isMonitoring ? i18n.t('friend.monitor.disable') : i18n.t('friend.monitor.enable');
+        return `
+        <div class="friend-row ${isMonitoring ? 'monitoring' : ''} ${isOffline ? 'offline' : ''}" data-friend-id="${friend.vrchatId}">
+          <div class="friend-row-controls">
+            <label class="friend-monitor-switch" title="${monitorTitle}">
+              <input type="checkbox" class="friend-monitor-toggle" data-friend-id="${friend.vrchatId}" ${isMonitoring ? 'checked' : ''}>
+              <span class="friend-monitor-slider"></span>
+            </label>
+          </div>
+          <img src="${friend.avatarUrl || 'https://via.placeholder.com/48'}" alt="${friend.displayName}" class="friend-row-avatar">
+          <div class="friend-row-info">
+            <div class="friend-row-name">${friend.displayName}</div>
+            <div class="friend-row-status">
+              <span class="${statusClass}">${statusText}</span>
+              ${friend.statusDescription ? `<span class="friend-row-status-description" title="${friend.statusDescription}">"${friend.statusDescription}"</span>` : ''}
+              ${friend.worldName ? `<span class="friend-row-world" title="${friend.worldName}">${friend.worldName}</span>` : ''}
+            </div>
+          </div>
+          <button class="friend-settings-btn" data-friend-id="${friend.vrchatId}" title="${i18n.t('friend.settings')}">⋮</button>
+        </div>
+      `}).join('');
+
+      bindFriendEvents(friends, friendsList, 'friend-row');
+    }
+
+    // 绑定好友事件
+    function bindFriendEvents(friends, friendsList, cardClass) {
+      friendsList.querySelectorAll('.friend-monitor-toggle').forEach(toggle => {
+        toggle.addEventListener('change', async (e) => {
+          const friendId = e.target.dataset.friendId;
+          const enabled = e.target.checked;
+          const card = friendsList.querySelector(`.${cardClass}[data-friend-id="${friendId}"]`);
+          
+          // 检查是否超过5个监控限制（仅状态模式下无限制）
+          if (enabled && !currentStatusOnlyMode) {
+            const monitoredCount = Object.values(friendMonitorConfigs).filter(c => c.monitorEnabled).length;
+            if (monitoredCount >= 5) {
+              e.target.checked = false;
+              alert(i18n.t('friend.monitor.max'));
+              return;
+            }
+          }
+
+          if (await updateFriendMonitor(friendId, enabled)) {
+            if (enabled) {
+              card.classList.add('monitoring');
+              e.target.parentElement.title = i18n.t('friend.monitor.disable');
+            } else {
+              card.classList.remove('monitoring');
+              e.target.parentElement.title = i18n.t('friend.monitor.enable');
+            }
+          } else {
+            e.target.checked = !enabled;
+            alert(i18n.t('friend.monitor.fail'));
+          }
+        });
+      });
+
+      friendsList.querySelectorAll('.friend-settings-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const friendId = e.target.dataset.friendId;
+          const friend = friends.find(f => f.vrchatId === friendId);
+          if (friend) openFriendSettings(friend);
+        });
+      });
+    }
+
+    // 渲染好友列表
+    function renderFriends(friends) {
+      const friendsList = document.getElementById('friendsList');
+
+      if (friends.length === 0) {
+        friendsList.innerHTML = `<div class="empty-state"><div class="empty-state-icon">-</div><p>${i18n.t('empty.friends')}</p></div>`;
+        return;
+      }
+
+      if (isListView) {
+        renderListView(friends, friendsList);
+        viewToggleBtn.textContent = '⊞';
+      } else {
+        renderGridView(friends, friendsList);
+        viewToggleBtn.textContent = '≡';
+      }
+    }
+
+    // 切换视图
+    function toggleView() {
+      isListView = !isListView;
+      if (currentFriends.length > 0) renderFriends(currentFriends);
+    }
+
+    viewToggleBtn.addEventListener('click', toggleView);
+
+    // 关于按钮点击事件 - 切换展开/收起
+    const aboutBtn = document.getElementById('aboutBtn');
+    const aboutPanel = document.getElementById('aboutPanel');
+
+    aboutBtn.addEventListener('click', () => {
+      if (aboutPanel.style.display === 'none') {
+        aboutPanel.style.display = 'block';
+        aboutBtn.style.background = 'var(--accent-bg)';
+        aboutBtn.style.color = 'var(--accent)';
+      } else {
+        aboutPanel.style.display = 'none';
+        aboutBtn.style.background = '';
+        aboutBtn.style.color = '';
+      }
+    });
+
+    // 仅监控状态模式帮助按钮
+    const statusOnlyModeHelpBtn = document.getElementById('statusOnlyModeHelpBtn');
+    const statusOnlyModePanel = document.getElementById('statusOnlyModePanel');
+    const closeStatusOnlyModePanel = document.getElementById('closeStatusOnlyModePanel');
+
+    statusOnlyModeHelpBtn.addEventListener('click', () => {
+      statusOnlyModePanel.style.display = 'block';
+    });
+
+    closeStatusOnlyModePanel.addEventListener('click', () => {
+      statusOnlyModePanel.style.display = 'none';
+    });
+
+    // 从 localStorage 加载好友缓存
+    function loadFriendsFromLocalStorage() {
+      try {
+        const cached = localStorage.getItem(`vrc_friends_cache_${currentUserId}`);
+        if (cached) {
+          const data = JSON.parse(cached);
+          // 缓存有效期7天
+          if (Date.now() - data.timestamp < 7 * 24 * 60 * 60 * 1000) {
+            return data.friends;
+          }
+        }
+      } catch (e) {
+        console.error('[好友缓存] 读取本地缓存失败:', e);
+      }
+      return null;
+    }
+
+    // 保存好友列表到 localStorage
+    function saveFriendsToLocalStorage(friends) {
+      try {
+        localStorage.setItem(`vrc_friends_cache_${currentUserId}`, JSON.stringify({
+          friends: friends,
+          timestamp: Date.now()
+        }));
+      } catch (e) {
+        console.error('[好友缓存] 保存本地缓存失败:', e);
+      }
+    }
+
+    // 首次加载好友列表（登录后自动调用，不检查冷却期）
+    async function initialLoadFriends() {
+      const friendsList = document.getElementById('friendsList');
+
+      // 先尝试从 localStorage 加载缓存
+      const cachedFriends = loadFriendsFromLocalStorage();
+      if (cachedFriends) {
+        console.log('[好友列表] 从本地缓存加载，避免触发API限流');
+        currentFriends = cachedFriends;
+        renderFriends(currentFriends);
+        // 显示缓存提示
+        const hint = document.querySelector('.refresh-hint');
+        hint.textContent = '已从本地缓存加载，点击刷新按钮获取最新数据';
+        hint.style.color = 'var(--accent)';
+      } else {
+        friendsList.innerHTML = `
+          <div class="empty-state">
+            <div class="loading"></div>
+            <p>正在加载好友列表...</p>
+            <p style="color: var(--text-muted); font-size: 12px; margin-top: 8px;">如果长时间无法加载，可能是触发了 API 保护机制</p>
+            <p style="color: var(--text-muted); font-size: 12px; margin-top: 4px;">请等待 60 秒后自动恢复，或查看终端日志了解详情</p>
+            <div style="margin-top: 12px; padding: 8px 12px; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.5); border-radius: 6px; display: inline-block;">
+              <p style="color: #ef4444; font-size: 13px; font-weight: 600; margin: 0;">请勿频繁多次刷新页面</p>
+            </div>
+          </div>
+        `;
+      }
+
+      await loadFriendMonitorConfigs();
+
+      try {
+        const res = await fetch(`${API_BASE}/friends/initial-refresh`, {
+          method: 'POST',
+          headers: { 'X-User-Id': currentUserId }
+        });
+        const data = await res.json();
+
+        if (data.code === 0) {
+          currentFriends = data.data.friends;
+          renderFriends(currentFriends);
+          // 保存到本地缓存
+          saveFriendsToLocalStorage(currentFriends);
+          // 显示倒计时提示
+          const hint = document.querySelector('.refresh-hint');
+          hint.classList.add('cooldown');
+
+          let remaining = 60;
+          hint.innerHTML = `${i18n.t('friends.refresh.cooldown')}<span class="countdown">${remaining}</span>${i18n.t('friends.refresh.cooldown.suffix')}`;
+
+          // 每秒更新倒计时
+          const countdownInterval = setInterval(() => {
+            remaining--;
+            if (remaining > 0) {
+              hint.innerHTML = `${i18n.t('friends.refresh.cooldown')}<span class="countdown">${remaining}</span>${i18n.t('friends.refresh.cooldown.suffix')}`;
+            } else {
+              clearInterval(countdownInterval);
+              hint.classList.remove('cooldown');
+              hint.textContent = i18n.t('friends.refresh.hint');
+              hint.style.color = '';
+            }
+          }, 1000);
+        } else {
+          if (!cachedFriends) {
+            friendsList.innerHTML = `<div class="empty-state"><p>加载失败: ${data.msg}</p></div>`;
+          }
+        }
+      } catch (err) {
+        if (!cachedFriends) {
+          friendsList.innerHTML = `<div class="empty-state"><p>加载失败: ${err.message}</p></div>`;
+        }
+      }
+    }
+
+    // 加载好友列表（使用缓存）
+    async function loadFriends() {
+      const friendsList = document.getElementById('friendsList');
+      friendsList.innerHTML = '<div class="empty-state"><div class="loading"></div><p>加载中...</p></div>';
+
+      await loadFriendMonitorConfigs();
+
+      try {
+        const res = await fetch(`${API_BASE}/friends`, {
+          headers: { 'X-User-Id': currentUserId }
+        });
+        const data = await res.json();
+
+        if (data.code === 0) {
+          currentFriends = data.data.friends;
+          renderFriends(currentFriends);
+          // 保存到本地缓存
+          saveFriendsToLocalStorage(currentFriends);
+        } else {
+          friendsList.innerHTML = `<div class="empty-state"><p>加载失败: ${data.msg}</p></div>`;
+        }
+      } catch (err) {
+        friendsList.innerHTML = `<div class="empty-state"><p>加载失败: ${err.message}</p></div>`;
+      }
+    }
+
+    // 从缓存加载好友列表（不触发API请求，用于重新打开网页时）
+    async function loadFriendsFromCache() {
+      const friendsList = document.getElementById('friendsList');
+
+      // 优先从 localStorage 加载缓存，不触发API请求
+      const cachedFriends = loadFriendsFromLocalStorage();
+      if (cachedFriends) {
+        console.log('[好友列表] 从本地缓存加载，避免触发API限流');
+        currentFriends = cachedFriends;
+        renderFriends(currentFriends);
+
+        // 显示缓存提示
+        const hint = document.querySelector('.refresh-hint');
+        hint.textContent = '已从本地缓存加载，点击刷新按钮获取最新数据';
+        hint.style.color = 'var(--accent)';
+
+        await loadFriendMonitorConfigs();
+        return;
+      }
+
+      // 没有本地缓存，显示加载中
+      friendsList.innerHTML = `
+        <div class="empty-state">
+          <div class="loading"></div>
+          <p>正在加载好友列表...</p>
+          <p style="color: var(--text-muted); font-size: 12px; margin-top: 8px;">如果长时间无法加载，可能是触发了 API 保护机制</p>
+          <p style="color: var(--text-muted); font-size: 12px; margin-top: 4px;">请等待 60 秒后自动恢复，或查看终端日志了解详情</p>
+          <div style="margin-top: 12px; padding: 8px 12px; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.5); border-radius: 6px; display: inline-block;">
+            <p style="color: #ef4444; font-size: 13px; font-weight: 600; margin: 0;">请勿频繁多次刷新页面</p>
+          </div>
+        </div>
+      `;
+
+      await loadFriendMonitorConfigs();
+
+      try {
+        const res = await fetch(`${API_BASE}/friends`, {
+          headers: { 'X-User-Id': currentUserId }
+        });
+        const data = await res.json();
+
+        if (data.code === 0) {
+          currentFriends = data.data.friends;
+          renderFriends(currentFriends);
+          // 保存到本地缓存
+          saveFriendsToLocalStorage(currentFriends);
+        } else {
+          friendsList.innerHTML = `<div class="empty-state"><p>加载失败: ${data.msg}</p></div>`;
+        }
+      } catch (err) {
+        friendsList.innerHTML = `<div class="empty-state"><p>加载失败: ${err.message}</p></div>`;
+      }
+    }
+
+    // 一键关闭监控
+    unmonitorAllBtn.addEventListener('click', async () => {
+      if (!confirm(i18n.t('friends.unmonitorAll') + '?')) return;
+
+      unmonitorAllBtn.disabled = true;
+      try {
+        const res = await fetch(`${API_BASE}/friends/monitor-all`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: currentUserId, enable: false })
+        });
+        const data = await res.json();
+        if (data.code === 0) {
+          alert(data.msg);
+          loadFriends();
+        }
+      } catch (err) {
+        alert(i18n.t('settings.saveFail') + ': ' + err.message);
+      } finally {
+        unmonitorAllBtn.disabled = false;
+      }
+    });
+
+    // 刷新好友列表按钮
+    const refreshFriendsBtn = document.getElementById('refreshFriendsBtn');
+    refreshFriendsBtn.addEventListener('click', async () => {
+      if (refreshFriendsBtn.disabled) return;
+      
+      refreshFriendsBtn.disabled = true;
+      refreshFriendsBtn.classList.add('spinning');
+      
+      try {
+        const res = await fetch(`${API_BASE}/friends/refresh`, {
+          method: 'POST',
+          headers: { 'X-User-Id': currentUserId }
+        });
+        const data = await res.json();
+        
+        if (data.code === 0) {
+          currentFriends = data.data.friends;
+          renderFriends(currentFriends);
+          // 保存到本地缓存
+          saveFriendsToLocalStorage(currentFriends);
+          // 显示刷新成功提示
+          const hint = document.querySelector('.refresh-hint');
+          const originalText = i18n.t('friends.refresh.hint');
+          hint.textContent = i18n.t('friends.refresh.success');
+          hint.style.color = 'var(--accent)';
+          setTimeout(() => {
+            hint.textContent = originalText;
+            hint.style.color = '';
+          }, 2000);
+        } else {
+          alert('刷新失败: ' + data.msg);
+        }
+      } catch (err) {
+        alert('刷新失败: ' + err.message);
+      } finally {
+        refreshFriendsBtn.disabled = false;
+        refreshFriendsBtn.classList.remove('spinning');
+      }
+    });
+
+    // 加载设置
+    async function loadSettings() {
+      try {
+        const res = await fetch(`${API_BASE}/settings`, {
+          headers: { 'X-User-Id': currentUserId }
+        });
+        const data = await res.json();
+
+        if (data.code === 0) {
+          const settings = data.data;
+          document.getElementById('notifyEmail').value = settings.email || '';
+          document.getElementById('smtpHost').value = settings.smtpHost || '';
+          document.getElementById('smtpPort').value = settings.smtpPort || '587';
+          document.getElementById('smtpSecure').checked = settings.smtpSecure;
+          document.getElementById('smtpUser').value = settings.smtpUser || '';
+          emailSubjectTemplate.value = settings.emailSubjectTemplate || '';
+          emailBodyTemplate.value = settings.emailBodyTemplate || '';
+          updateEmailPreview();
+          
+          // 加载仅状态模式设置
+          currentStatusOnlyMode = settings.statusOnlyMode || false;
+          statusOnlyModeToggle.checked = currentStatusOnlyMode;
+          updateStatusOnlyModeUI(currentStatusOnlyMode);
+        }
+
+        // 加载访问密钥设置
+        await loadAccessKeySettings();
+      } catch (err) {
+        console.error('加载设置失败:', err);
+      }
+    }
+    
+    // 加载 Gotify 设置
+    async function loadGotifySettings() {
+      try {
+        const res = await fetch(`${API_BASE}/settings`, {
+          headers: { 'X-User-Id': currentUserId }
+        });
+        const data = await res.json();
+
+        if (data.code === 0) {
+          const settings = data.data;
+          gotifyEnabled.checked = settings.gotifyEnabled;
+          gotifyServerUrl.value = settings.gotifyServerUrl || '';
+          gotifyAppToken.value = settings.gotifyAppToken || '';
+          gotifyPriority.value = settings.gotifyPriority || 5;
+          gotifyTitleTemplate.value = settings.gotifyTitleTemplate || '';
+          gotifyMessageTemplate.value = settings.gotifyMessageTemplate || '';
+          updateGotifyPreview();
+          
+          // 加载 Webhook 设置
+          webhookEnabled.checked = settings.webhookEnabled;
+          webhookUrl.value = settings.webhookUrl || '';
+          webhookMethod.value = settings.webhookMethod || 'POST';
+          webhookHeaders.value = settings.webhookHeaders || '';
+          webhookBodyTemplate.value = settings.webhookBodyTemplate || '';
+          webhookContentType.value = settings.webhookContentType || 'application/json';
+        }
+      } catch (err) {
+        console.error('加载 Gotify 设置失败:', err);
+      }
+    }
+    
+    // 渲染 Gotify 模板
+    function renderGotifyTemplate(template, variables) {
+      if (!template) return '';
+      let result = template;
+      for (const [key, value] of Object.entries(variables)) {
+        const placeholder = `{${key}}`;
+        result = result.split(placeholder).join(value || '');
+      }
+      return result;
+    }
+    
+    // 更新 Gotify 预览
+    function updateGotifyPreview() {
+      const timestamp = new Date().toLocaleString('zh-CN');
+      
+      // 单条推送预览 - 显示智能标题示例
+      const singleTitle = ' 测试好友 上线了';
+      const singleMessage = `**测试好友** 刚刚上线了！
+
+ 当前状态: active
+ 所在世界: The Great Pug
+
+ ${timestamp}`;
+      
+      document.getElementById('gotifySinglePreview').innerHTML = `
+        <div style="margin-bottom: 8px; padding: 8px; background: var(--bg-secondary); border-radius: 4px;">
+          <strong>标题:</strong> ${escapeHtml(singleTitle)}
+        </div>
+        <div style="border: 1px solid var(--border); padding: 12px; border-radius: 4px; background: var(--bg-primary);">
+          <div style="white-space: pre-wrap; font-family: inherit;">${escapeHtml(singleMessage)}</div>
+        </div>
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 8px;">
+           默认使用智能标题，无需配置模板即可直观显示变化内容
+        </p>
+      `;
+      
+      // 世界变化推送预览
+      const worldChangeTitle = '测试好友: The Great Pug → Black Cat';
+      const worldChangeMessage = `**测试好友** 切换到了新的世界
+
+世界变化:
+  从: The Great Pug
+  到: Black Cat
+
+时间: ${timestamp}`;
+      
+      // 批量推送预览
+      const batchTitle = '2位好友切换了世界';
+      const batchMessage = `**共有 2 位好友切换了世界**
+
+1. **好友A**
+   The Great Pug → Black Cat
+
+2. **好友B**
+   Home World → The Great Pug
+
+时间: ${timestamp}`;
+      
+      document.getElementById('gotifyBatchPreview').innerHTML = `
+        <div style="margin-bottom: 12px;">
+          <div style="margin-bottom: 8px; padding: 8px; background: var(--bg-secondary); border-radius: 4px;">
+            <strong>世界变化标题:</strong> ${escapeHtml(worldChangeTitle)}
+          </div>
+          <div style="border: 1px solid var(--border); padding: 12px; border-radius: 4px; background: var(--bg-primary); margin-bottom: 16px;">
+            <div style="white-space: pre-wrap; font-family: inherit;">${escapeHtml(worldChangeMessage)}</div>
+          </div>
+        </div>
+        
+        <div style="margin-bottom: 12px; padding-top: 12px; border-top: 1px solid var(--border);">
+          <div style="margin-bottom: 8px; padding: 8px; background: var(--bg-secondary); border-radius: 4px;">
+            <strong>批量推送标题:</strong> ${escapeHtml(batchTitle)}
+          </div>
+          <div style="border: 1px solid var(--border); padding: 12px; border-radius: 4px; background: var(--bg-primary);">
+            <div style="white-space: pre-wrap; font-family: inherit;">${escapeHtml(batchMessage)}</div>
+          </div>
+        </div>
+      `;
+    }
+    
+    // HTML 转义函数
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+    
+    // 监听模板输入变化
+    gotifyTitleTemplate.addEventListener('input', updateGotifyPreview);
+    gotifyMessageTemplate.addEventListener('input', updateGotifyPreview);
+
+    // 加载访问密钥设置
+    async function loadAccessKeySettings() {
+      try {
+        const res = await fetch(`${API_BASE}/access-key-status`);
+        const data = await res.json();
+        
+        if (data.code === 0) {
+          const enabled = data.data.enabled;
+          const accessKey = data.data.accessKey;
+          
+          document.getElementById('accessKeyEnabled').checked = enabled;
+          document.getElementById('currentAccessKey').value = accessKey;
+          
+          // 根据启用状态显示/隐藏密钥显示区域
+          document.getElementById('accessKeyDisplaySection').style.display = enabled ? 'block' : 'none';
+        }
+      } catch (err) {
+        console.error('加载访问密钥设置失败:', err);
+      }
+    }
+
+    // 访问密钥开关事件
+    document.getElementById('accessKeyEnabled').addEventListener('change', async (e) => {
+      const enabled = e.target.checked;
+      
+      try {
+        const currentKey = document.getElementById('currentAccessKey').value;
+        const res = await fetch(`${API_BASE}/access-key-settings`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ enabled, accessKey: currentKey })
+        });
+        const data = await res.json();
+        
+        if (data.code === 0) {
+          document.getElementById('accessKeyDisplaySection').style.display = enabled ? 'block' : 'none';
+          alert(enabled ? i18n.t('settings.accessKey.enabled') : i18n.t('settings.accessKey.disabled'));
+        } else {
+          alert(i18n.t('settings.saveFail') + ': ' + data.msg);
+          e.target.checked = !enabled;
+        }
+      } catch (err) {
+        alert(i18n.t('settings.saveFail') + ': ' + err.message);
+        e.target.checked = !enabled;
+      }
+    });
+
+    // 复制访问密钥
+    document.getElementById('copyAccessKeyBtn').addEventListener('click', () => {
+      const keyInput = document.getElementById('currentAccessKey');
+      keyInput.select();
+      document.execCommand('copy');
+      alert(i18n.t('settings.accessKey.copied'));
+    });
+
+    // 重新生成访问密钥
+    document.getElementById('regenerateAccessKeyBtn').addEventListener('click', async () => {
+      if (!confirm(i18n.t('settings.accessKey.warning'))) return;
+
+      // 生成新密钥
+      const newKey = Array.from(crypto.getRandomValues(new Uint8Array(32)))
+        .map(b => b.toString(16).padStart(2, '0').toUpperCase())
+        .join('');
+
+      try {
+        const res = await fetch(`${API_BASE}/access-key-settings`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ enabled: true, accessKey: newKey })
+        });
+        const data = await res.json();
+
+        if (data.code === 0) {
+          document.getElementById('currentAccessKey').value = newKey;
+          alert(i18n.t('settings.accessKey.warning'));
+        } else {
+          alert(i18n.t('settings.saveFail') + ': ' + data.msg);
+        }
+      } catch (err) {
+        alert(i18n.t('settings.saveFail') + ': ' + err.message);
+      }
+    });
+
+    // 更新邮件预览
+    function updateEmailPreview() {
+      const subject = emailSubjectTemplate.value || '[VRC-Notifier] {changeType}: {friendName}';
+      const body = emailBodyTemplate.value || '';
+      const timestamp = new Date().toLocaleString('zh-CN');
+      
+      // ========== 单条通知模板预览 ==========
+      const singleChangeDetailsHtml = `
+        <tr>
+          <td style="padding: 12px 15px; border-bottom: 1px solid #e5e7eb; color: #6b7280; width: 30%;">状态变化</td>
+          <td style="padding: 12px 15px; border-bottom: 1px solid #e5e7eb;">
+            <span style="color: #9ca3af; text-decoration: line-through;">离线</span>
+            <span style="color: #3b82f6; margin: 0 10px;">→</span>
+            <span style="color: #10b981; font-weight: 500;">在线 (Active)</span>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 12px 15px; border-bottom: 1px solid #e5e7eb; color: #6b7280; width: 30%;">所在世界</td>
+          <td style="padding: 12px 15px; border-bottom: 1px solid #e5e7eb;">
+            <span style="color: #9ca3af; text-decoration: line-through;">-</span>
+            <span style="color: #3b82f6; margin: 0 10px;">→</span>
+            <span style="color: #10b981; font-weight: 500;">The Great Pug</span>
+          </td>
+        </tr>
+      `;
+      
+      const singlePreviewSubject = subject
+        .replace(/{friendName}/g, '测试好友')
+        .replace(/{changeType}/g, '好友上线')
+        .replace(/{changeDescription}/g, '测试好友 刚刚上线了')
+        .replace(/{oldStatus}/g, '离线')
+        .replace(/{newStatus}/g, '在线')
+        .replace(/{oldWorld}/g, '-')
+        .replace(/{newWorld}/g, 'The Great Pug')
+        .replace(/{timestamp}/g, timestamp);
+      
+      let singlePreviewBody;
+      if (body.trim()) {
+        singlePreviewBody = body
+          .replace(/{friendName}/g, '测试好友')
+          .replace(/{changeType}/g, '好友上线')
+          .replace(/{changeDescription}/g, '测试好友 刚刚上线了')
+          .replace(/{changeDetailsHtml}/g, singleChangeDetailsHtml)
+          .replace(/{oldStatus}/g, '离线')
+          .replace(/{newStatus}/g, '在线')
+          .replace(/{oldWorld}/g, '-')
+          .replace(/{newWorld}/g, 'The Great Pug')
+          .replace(/{timestamp}/g, timestamp)
+          .replace(/{avatarUrl}/g, '');
+      } else {
+        // 默认单条通知模板（头像区域留空）
+        singlePreviewBody = `
+          <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f3f4f6;">
+            <div style="background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+              <div style="background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%); padding: 30px; text-align: center;">
+                <h1 style="margin: 0; color: white; font-size: 24px;">VRC-Notifier</h1>
+                <p style="margin: 8px 0 0 0; color: rgba(255,255,255,0.9); font-size: 14px;">好友状态监控通知</p>
+              </div>
+              <div style="padding: 40px;">
+                <div style="text-align: center; margin-bottom: 30px;">
+                  <span style="display: inline-block; background: #dbeafe; color: #3b82f6; padding: 8px 20px; border-radius: 20px; font-size: 14px; font-weight: 500;">好友上线</span>
+                </div>
+                <div style="text-align: center; margin-bottom: 30px;">
+                  <div style="width: 100px; height: 100px; border-radius: 50%; border: 3px solid #e5e7eb; margin: 0 auto 15px; background: #f3f4f6;"></div>
+                  <h2 style="margin: 0; color: #1f2937; font-size: 22px;">测试好友</h2>
+                  <p style="margin: 10px 0 0 0; color: #6b7280;">测试好友 刚刚上线了</p>
+                </div>
+                <table width="100%" style="background: #f9fafb; border-radius: 12px; overflow: hidden; margin: 25px 0;">
+                  <thead>
+                    <tr>
+                      <th colspan="2" style="background: #f3f4f6; padding: 15px; text-align: left; color: #374151; font-size: 14px; font-weight: 600; border-bottom: 1px solid #e5e7eb;">变化详情</th>
+                    </tr>
+                  </thead>
+                  <tbody>${singleChangeDetailsHtml}</tbody>
+                </table>
+                <div style="text-align: center; margin-top: 25px; padding-top: 25px; border-top: 1px solid #e5e7eb;">
+                  <p style="margin: 0; color: #9ca3af; font-size: 13px;">通知时间: ${timestamp}</p>
+                </div>
+              </div>
+              <div style="background: #f9fafb; padding: 20px 40px; text-align: center; border-top: 1px solid #e5e7eb;">
+                <p style="margin: 0; color: #9ca3af; font-size: 12px;">此邮件由 VRC-Notifier 自动发送</p>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+      
+      document.getElementById('singleEmailPreview').innerHTML = `
+        <div style="margin-bottom: 10px; padding: 8px; background: var(--bg-secondary); border-radius: 4px; font-size: 0.85rem;">
+          <strong>主题：</strong>${singlePreviewSubject}
+        </div>
+        <div style="border: 1px solid var(--border); padding: 10px; border-radius: 4px; overflow: auto;">
+          ${singlePreviewBody}
+        </div>
+      `;
+      
+      // ========== 批量通知模板预览 ==========
+      const batchPreviewSubject = '[VRC-Notifier] 好友状态批量更新: 2人切换世界 (2人)';
+      
+      const batchPreviewBody = `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f3f4f6;">
+          <div style="background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <div style="background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%); padding: 30px; text-align: center;">
+              <h1 style="margin: 0; color: white; font-size: 24px;">VRC-Notifier</h1>
+              <p style="margin: 8px 0 0 0; color: rgba(255,255,255,0.9); font-size: 14px;">好友状态批量更新</p>
+            </div>
+            <div style="padding: 30px 40px 20px 40px;">
+              <div style="background: #f0f9ff; border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 20px;">
+                <div style="font-size: 32px; font-weight: 700; color: #3b82f6; margin-bottom: 8px;">2</div>
+                <div style="color: #6b7280; font-size: 14px;">位好友状态发生变化</div>
+                <div style="margin-top: 12px; color: #374151; font-size: 13px;">2人切换世界</div>
+              </div>
+              <table width="100%" cellpadding="0" cellspacing="0" style="background: white; border-radius: 12px; overflow: hidden;">
+                <thead>
+                  <tr>
+                    <th colspan="2" style="background: #f9fafb; padding: 15px 20px; text-align: left; color: #374151; font-size: 14px; font-weight: 600; border-bottom: 2px solid #e5e7eb;">变化详情</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style="padding: 15px; border-bottom: 1px solid #e5e7eb; vertical-align: top;">
+                      <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 48px; height: 48px; border-radius: 50%; border: 2px solid #e5e7eb; background: #f3f4f6;"></div>
+                        <div>
+                          <div style="font-weight: 600; color: #1f2937; font-size: 16px;">好友A</div>
+                          <div style="color: #6b7280; font-size: 13px; margin-top: 4px;">世界: The Great Pug → Black Cat</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td style="padding: 15px; border-bottom: 1px solid #e5e7eb; vertical-align: middle; text-align: right;">
+                      <span style="display: inline-block; background: #3b82f6; color: white; padding: 6px 14px; border-radius: 12px; font-size: 12px; font-weight: 500;">切换世界</span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 15px; border-bottom: 1px solid #e5e7eb; vertical-align: top;">
+                      <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 48px; height: 48px; border-radius: 50%; border: 2px solid #e5e7eb; background: #f3f4f6;"></div>
+                        <div>
+                          <div style="font-weight: 600; color: #1f2937; font-size: 16px;">好友B</div>
+                          <div style="color: #6b7280; font-size: 13px; margin-top: 4px;">世界: Home World → The Great Pug</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td style="padding: 15px; border-bottom: 1px solid #e5e7eb; vertical-align: middle; text-align: right;">
+                      <span style="display: inline-block; background: #3b82f6; color: white; padding: 6px 14px; border-radius: 12px; font-size: 12px; font-weight: 500;">切换世界</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <div style="text-align: center; margin-top: 25px; padding-top: 25px; border-top: 1px solid #e5e7eb;">
+                <p style="margin: 0; color: #9ca3af; font-size: 13px;">通知时间: ${timestamp}</p>
+              </div>
+            </div>
+            <div style="background: #f9fafb; padding: 20px 40px; text-align: center; border-top: 1px solid #e5e7eb;">
+              <p style="margin: 0; color: #9ca3af; font-size: 12px;">此邮件由 VRC-Notifier 自动发送</p>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      document.getElementById('batchEmailPreview').innerHTML = `
+        <div style="margin-bottom: 10px; padding: 8px; background: var(--bg-secondary); border-radius: 4px; font-size: 0.85rem;">
+          <strong>主题：</strong>${batchPreviewSubject}
+        </div>
+        <div style="border: 1px solid var(--border); padding: 10px; border-radius: 4px; overflow: auto;">
+          ${batchPreviewBody}
+        </div>
+      `;
+    }
+
+    emailSubjectTemplate.addEventListener('input', updateEmailPreview);
+    emailBodyTemplate.addEventListener('input', updateEmailPreview);
+
+    // 发送测试邮件
+    sendTestEmailBtn.addEventListener('click', async () => {
+      if (!currentUserId) {
+        alert(i18n.t('login.title'));
+        return;
+      }
+
+      sendTestEmailBtn.disabled = true;
+      try {
+        const res = await fetch(`${API_BASE}/test-email`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: currentUserId,
+            testEmail: testEmail.value.trim() || null
+          })
+        });
+        const data = await res.json();
+        alert(data.code === 0 ? '[OK] ' + data.msg : '[X] ' + data.msg);
+      } catch (err) {
+        alert('[X] ' + i18n.t('settings.test.fail') + ': ' + err.message);
+      } finally {
+        sendTestEmailBtn.disabled = false;
+      }
+    });
+
+    // 保存设置
+    saveSettingsBtn.addEventListener('click', async () => {
+      const settings = {
+        userId: currentUserId,
+        email: document.getElementById('notifyEmail').value.trim(),
+        smtpHost: document.getElementById('smtpHost').value.trim(),
+        smtpPort: parseInt(document.getElementById('smtpPort').value) || 587,
+        smtpSecure: document.getElementById('smtpSecure').checked,
+        smtpUser: document.getElementById('smtpUser').value.trim(),
+        emailSubjectTemplate: emailSubjectTemplate.value.trim(),
+        emailBodyTemplate: emailBodyTemplate.value.trim()
+      };
+
+      // 只有当用户输入了新的密码（不是占位符）时才保存
+      const smtpPassValue = document.getElementById('smtpPass').value.trim();
+      if (smtpPassValue && smtpPassValue !== '' && !smtpPassValue.includes('*')) {
+        settings.smtpPass = smtpPassValue;
+      }
+
+      saveSettingsBtn.disabled = true;
+      try {
+        const res = await fetch(`${API_BASE}/settings`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(settings)
+        });
+        const data = await res.json();
+        alert(data.code === 0 ? i18n.t('settings.saved') : i18n.t('settings.saveFail') + ': ' + data.msg);
+      } catch (err) {
+        alert(i18n.t('settings.saveFail') + ': ' + err.message);
+      } finally {
+        saveSettingsBtn.disabled = false;
+      }
+    });
+
+    // 弹窗事件
+    modalCancelBtn.addEventListener('click', closeFriendSettings);
+    modalSaveBtn.addEventListener('click', saveFriendSettings);
+    friendSettingsModal.addEventListener('click', (e) => {
+      if (e.target === friendSettingsModal) closeFriendSettings();
+    });
+
+    // 保存 Gotify 设置
+    saveGotifySettingsBtn.addEventListener('click', async () => {
+      const settings = {
+        userId: currentUserId,
+        gotifyEnabled: gotifyEnabled.checked,
+        gotifyServerUrl: gotifyServerUrl.value.trim(),
+        gotifyPriority: parseInt(gotifyPriority.value) || 5,
+        gotifyTitleTemplate: gotifyTitleTemplate.value.trim(),
+        gotifyMessageTemplate: gotifyMessageTemplate.value.trim()
+      };
+
+      // 只有当用户输入了新的 Token（不是占位符）时才保存
+      const tokenValue = gotifyAppToken.value.trim();
+      if (tokenValue && tokenValue !== '' && !tokenValue.includes('*')) {
+        settings.gotifyAppToken = tokenValue;
+      }
+
+      saveGotifySettingsBtn.disabled = true;
+      try {
+        const res = await fetch(`${API_BASE}/settings`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(settings)
+        });
+        const data = await res.json();
+        alert(data.code === 0 ? i18n.t('gotify.saved') : i18n.t('gotify.saveFail') + ': ' + data.msg);
+      } catch (err) {
+        alert(i18n.t('gotify.saveFail') + ': ' + err.message);
+      } finally {
+        saveGotifySettingsBtn.disabled = false;
+      }
+    });
+
+    // 发送测试 Gotify 推送
+    sendTestGotifyBtn.addEventListener('click', async () => {
+      if (!currentUserId) {
+        alert(i18n.t('login.title'));
+        return;
+      }
+
+      const serverUrl = gotifyServerUrl.value.trim();
+      const appToken = gotifyAppToken.value.trim();
+      const priority = parseInt(gotifyPriority.value) || 5;
+
+      if (!serverUrl) {
+        alert(i18n.t('gotify.server.url'));
+        return;
+      }
+
+      // 检查 Token 是否为占位符，如果是则让后端从数据库读取
+      const isTokenPlaceholder = appToken.includes('*') || appToken === '';
+
+      sendTestGotifyBtn.disabled = true;
+      try {
+        const res = await fetch(`${API_BASE}/test-gotify`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: currentUserId,
+            gotifyServerUrl: serverUrl,
+            // 如果是占位符，不发送 Token，让后端从数据库读取
+            ...(isTokenPlaceholder ? {} : { gotifyAppToken: appToken }),
+            gotifyPriority: priority
+          })
+        });
+        const data = await res.json();
+        alert(data.code === 0 ? '[OK] ' + data.msg : '[X] ' + data.msg);
+      } catch (err) {
+        alert('[X] ' + i18n.t('gotify.test.fail') + ': ' + err.message);
+      } finally {
+        sendTestGotifyBtn.disabled = false;
+      }
+    });
+
+    // 保存 Webhook 设置
+    saveWebhookSettingsBtn.addEventListener('click', async () => {
+      const settings = {
+        userId: currentUserId,
+        webhookEnabled: webhookEnabled.checked,
+        webhookUrl: webhookUrl.value.trim(),
+        webhookMethod: webhookMethod.value,
+        webhookHeaders: webhookHeaders.value.trim(),
+        webhookBodyTemplate: webhookBodyTemplate.value.trim(),
+        webhookContentType: webhookContentType.value
+      };
+
+      saveWebhookSettingsBtn.disabled = true;
+      try {
+        const res = await fetch(`${API_BASE}/settings`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(settings)
+        });
+        const data = await res.json();
+        alert(data.code === 0 ? i18n.t('webhook.saved') : i18n.t('webhook.saveFail') + ': ' + data.msg);
+      } catch (err) {
+        alert(i18n.t('webhook.saveFail') + ': ' + err.message);
+      } finally {
+        saveWebhookSettingsBtn.disabled = false;
+      }
+    });
+
+    // 发送测试 Webhook
+    sendTestWebhookBtn.addEventListener('click', async () => {
+      if (!currentUserId) {
+        alert(i18n.t('login.title'));
+        return;
+      }
+
+      const url = webhookUrl.value.trim();
+
+      if (!url) {
+        alert(i18n.t('webhook.url'));
+        return;
+      }
+
+      sendTestWebhookBtn.disabled = true;
+      try {
+        const res = await fetch(`${API_BASE}/test-webhook`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: currentUserId,
+            webhookUrl: url,
+            webhookMethod: webhookMethod.value,
+            webhookHeaders: webhookHeaders.value.trim(),
+            webhookBodyTemplate: webhookBodyTemplate.value.trim(),
+            webhookContentType: webhookContentType.value
+          })
+        });
+        const data = await res.json();
+        alert(data.code === 0 ? '[OK] ' + data.msg : '[X] ' + data.msg);
+      } catch (err) {
+        alert('[X] ' + i18n.t('webhook.test.fail') + ': ' + err.message);
+      } finally {
+        sendTestWebhookBtn.disabled = false;
+      }
+    });
+
+    // 标签页切换
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+        tab.classList.add('active');
+        document.getElementById(tab.dataset.tab + 'Tab').classList.add('active');
+
+        if (tab.dataset.tab === 'friends') loadFriends();
+        if (tab.dataset.tab === 'settings') loadSettings();
+        if (tab.dataset.tab === 'gotify') loadGotifySettings();
+        if (tab.dataset.tab === 'webhook') loadGotifySettings(); // Webhook 和 Gotify 共用设置加载
+      });
+    });
+  </script>
+</body>
+</html>

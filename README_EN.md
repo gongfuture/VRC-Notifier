@@ -69,7 +69,7 @@ version: '3.8'
 
 services:
   vrc-notifier:
-    image: shanyaojin/vrc-notifier:latest
+    image: shanyaojinjin/vrc-notifier:latest
     container_name: vrc-notifier
     restart: unless-stopped
     ports:
@@ -219,3 +219,4 @@ This project is open-sourced under the [MIT](LICENSE) license.
 ---
 
 Made with ❤️ for VRChat Community
+

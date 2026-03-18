@@ -9,6 +9,7 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
+const { execFile } = require('child_process');
 
 const app = express();
 const PORT = process.env.PORT || 5270;
@@ -58,9 +59,15 @@ db.serialize(() => {
     ntfy_enabled INTEGER DEFAULT 0,
     ntfy_server_url TEXT DEFAULT 'https://ntfy.sh',
     ntfy_topic TEXT,
+    ntfy_token TEXT,
+    ntfy_tags TEXT DEFAULT '',
     ntfy_priority INTEGER DEFAULT 3,
     ntfy_title_template TEXT DEFAULT '[VRC-Notifier] {changeType}: {friendName}',
     ntfy_message_template TEXT DEFAULT '好友 {friendName} {changeType}\n\n状态: {oldStatus} → {newStatus}\n世界: {newWorld}\n\n时间: {timestamp}',
+    shoutrrr_enabled INTEGER DEFAULT 0,
+    shoutrrr_url TEXT,
+    shoutrrr_title_template TEXT DEFAULT '[VRC-Notifier] {changeType}: {friendName}',
+    shoutrrr_message_template TEXT DEFAULT '好友 {friendName} {changeType}\n\n状态: {oldStatus} → {newStatus}\n世界: {newWorld}\n\n时间: {timestamp}',
     status_only_mode INTEGER DEFAULT 0,  -- 仅监控好友状态模式（0=关闭，1=开启）
     remember_me INTEGER DEFAULT 0,       -- 记住我功能（0=关闭，1=开启）
     cookie_data TEXT,                    -- 加密的cookie数据（用于自动登录）
@@ -165,6 +172,43 @@ db.serialize(() => {
       db.run(`ALTER TABLE users ADD COLUMN ntfy_message_template TEXT DEFAULT '好友 {friendName} {changeType}\n\n状态: {oldStatus} → {newStatus}\n世界: {newWorld}\n\n时间: {timestamp}'`, (err) => {
         if (err) console.error('添加 ntfy_message_template 字段失败:', err);
         else console.log('[OK] 已添加 ntfy_message_template 字段');
+      });
+    }
+    if (!columns.includes('ntfy_token')) {
+      db.run(`ALTER TABLE users ADD COLUMN ntfy_token TEXT`, (err) => {
+        if (err) console.error('添加 ntfy_token 字段失败:', err);
+        else console.log('[OK] 已添加 ntfy_token 字段');
+      });
+    }
+    if (!columns.includes('ntfy_tags')) {
+      db.run(`ALTER TABLE users ADD COLUMN ntfy_tags TEXT DEFAULT ''`, (err) => {
+        if (err) console.error('添加 ntfy_tags 字段失败:', err);
+        else console.log('[OK] 已添加 ntfy_tags 字段');
+      });
+    }
+    // 添加 Shoutrrr 相关字段
+    if (!columns.includes('shoutrrr_enabled')) {
+      db.run(`ALTER TABLE users ADD COLUMN shoutrrr_enabled INTEGER DEFAULT 0`, (err) => {
+        if (err) console.error('添加 shoutrrr_enabled 字段失败:', err);
+        else console.log('[OK] 已添加 shoutrrr_enabled 字段');
+      });
+    }
+    if (!columns.includes('shoutrrr_url')) {
+      db.run(`ALTER TABLE users ADD COLUMN shoutrrr_url TEXT`, (err) => {
+        if (err) console.error('添加 shoutrrr_url 字段失败:', err);
+        else console.log('[OK] 已添加 shoutrrr_url 字段');
+      });
+    }
+    if (!columns.includes('shoutrrr_title_template')) {
+      db.run(`ALTER TABLE users ADD COLUMN shoutrrr_title_template TEXT DEFAULT '[VRC-Notifier] {changeType}: {friendName}'`, (err) => {
+        if (err) console.error('添加 shoutrrr_title_template 字段失败:', err);
+        else console.log('[OK] 已添加 shoutrrr_title_template 字段');
+      });
+    }
+    if (!columns.includes('shoutrrr_message_template')) {
+      db.run(`ALTER TABLE users ADD COLUMN shoutrrr_message_template TEXT DEFAULT '好友 {friendName} {changeType}\n\n状态: {oldStatus} → {newStatus}\n世界: {newWorld}\n\n时间: {timestamp}'`, (err) => {
+        if (err) console.error('添加 shoutrrr_message_template 字段失败:', err);
+        else console.log('[OK] 已添加 shoutrrr_message_template 字段');
       });
     }
     // 添加 status_only_mode 字段（仅监控好友状态模式）
@@ -1187,8 +1231,16 @@ async function sendNtfyNotification(user, title, message, priority = 3, tags = n
     headers['Title'] = encodedTitle;
     const ntfyPriority = Math.max(1, Math.min(5, priority));
     headers['Priority'] = String(ntfyPriority);
-    if (tags) {
-      const tagStr = Array.isArray(tags) ? tags.join(',') : String(tags);
+
+    // Bearer Token 认证
+    if (user.ntfy_token && user.ntfy_token.trim() !== '') {
+      headers['Authorization'] = 'Bearer ' + user.ntfy_token.trim();
+    }
+
+    // Tags 支持：优先使用传入的 tags，其次使用用户配置的 ntfy_tags
+    const effectiveTags = tags || (user.ntfy_tags && user.ntfy_tags.trim() !== '' ? user.ntfy_tags.trim() : null);
+    if (effectiveTags) {
+      const tagStr = Array.isArray(effectiveTags) ? effectiveTags.join(',') : String(effectiveTags);
       headers['Tags'] = tagStr.replace(/[^\x20-\x7E,]/g, '');
     }
 
@@ -1209,6 +1261,54 @@ async function sendNtfyNotification(user, title, message, priority = 3, tags = n
   } catch (e) {
     console.error('[NTFY] 发送推送失败:', e.message);
     console.error('[NTFY] Error stack:', e.stack);
+    return false;
+  }
+}
+
+// 发送 Shoutrrr 推送通知
+async function sendShoutrrrNotification(user, title, message) {
+  if (!user.shoutrrr_enabled || !user.shoutrrr_url) {
+    console.log(`用户 ${user.display_name} 未配置 Shoutrrr，跳过推送`);
+    return false;
+  }
+
+  try {
+    const shoutrrrUrl = user.shoutrrr_url.trim();
+
+    // 清理 title
+    let cleanTitle = title
+      .replace(/[\x00-\x1F\x7F]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .substring(0, 250);
+
+    if (!cleanTitle) {
+      cleanTitle = 'VRC-Notifier';
+    }
+
+    // 清理 message
+    let cleanMessage = message || '';
+    cleanMessage = cleanMessage.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+
+    console.log(`[Shoutrrr] 发送: ${cleanTitle}`);
+
+    return new Promise((resolve) => {
+      // 通过 CLI 调用 shoutrrr
+      execFile('shoutrrr', ['send', '--url', shoutrrrUrl, '--message', cleanMessage, '--title', cleanTitle], (error, stdout, stderr) => {
+        if (error) {
+          console.error('[Shoutrrr] CLI 执行失败:', error.message);
+          resolve(false);
+          return;
+        }
+
+        // Shoutrrr 成功发送时 stderr 通常也会有日志，但退出码为 0
+        console.log(`[Shoutrrr] 成功`);
+        resolve(true);
+      });
+    });
+  } catch (e) {
+    console.error('[Shoutrrr] 发送推送失败:', e.message);
+    console.error('[Shoutrrr] Error stack:', e.stack);
     return false;
   }
 }
@@ -2263,6 +2363,70 @@ async function checkFriendStatus(user) {
             
             // 不使用图标标签，保持简洁
             await sendNtfyNotification(user, ntfyTitle, ntfyMessage, user.ntfy_priority || 3, null);
+          }
+
+          // 发送 Shoutrrr 推送
+          if (user.shoutrrr_enabled && user.shoutrrr_url) {
+            const shoutrrrTitleTemplate = user.shoutrrr_title_template;
+            const shoutrrrMessageTemplate = user.shoutrrr_message_template;
+            let shoutrrrTitle, shoutrrrMessage;
+
+            if (!shoutrrrTitleTemplate || shoutrrrTitleTemplate === '[VRC-Notifier] {changeType}: {friendName}') {
+              shoutrrrTitle = generateGotifyTitle(
+                dbFriend.display_name,
+                changeType,
+                oldStatus,
+                newStatus,
+                oldWorld,
+                newWorldName
+              );
+            } else {
+              const templateVars = {
+                friendName: dbFriend.display_name,
+                changeType: changeType,
+                oldStatus: oldStatus || '未知',
+                newStatus: newStatus || '未知',
+                oldWorld: oldWorld || '-',
+                newWorld: newWorldName || '-',
+                oldStatusDescription: oldStatusDescription || '无',
+                newStatusDescription: newStatusDescription || '无',
+                timestamp: ntfyTimestamp,
+                oldPlatform: getPlatformDisplayName(oldPlatform || 'unknown'),
+                newPlatform: getPlatformDisplayName(newPlatform || 'unknown')
+              };
+              shoutrrrTitle = renderGotifyTemplate(shoutrrrTitleTemplate, templateVars);
+            }
+
+            if (!shoutrrrMessageTemplate || shoutrrrMessageTemplate.includes('{friendName}')) {
+              shoutrrrMessage = generateGotifyMessage(
+                dbFriend.display_name,
+                changeType,
+                oldStatus,
+                newStatus,
+                oldWorld,
+                newWorldName,
+                ntfyTimestamp,
+                oldStatusDescription,
+                newStatusDescription
+              );
+            } else {
+              const templateVars = {
+                friendName: dbFriend.display_name,
+                changeType: changeType,
+                oldStatus: oldStatus || '未知',
+                newStatus: newStatus || '未知',
+                oldWorld: oldWorld || '-',
+                newWorld: newWorldName || '-',
+                oldStatusDescription: oldStatusDescription || '无',
+                newStatusDescription: newStatusDescription || '无',
+                timestamp: ntfyTimestamp,
+                oldPlatform: getPlatformDisplayName(oldPlatform || 'unknown'),
+                newPlatform: getPlatformDisplayName(newPlatform || 'unknown')
+              };
+              shoutrrrMessage = renderGotifyTemplate(shoutrrrMessageTemplate, templateVars);
+            }
+
+            await sendShoutrrrNotification(user, shoutrrrTitle, shoutrrrMessage);
           }
 
           // 发送通用 Webhook 推送
@@ -3524,7 +3688,8 @@ app.post('/api/settings', async (req, res) => {
     const {
       userId, email, smtpHost, smtpPort, smtpSecure, smtpUser, smtpPass, emailSubjectTemplate, emailBodyTemplate,
       gotifyEnabled, gotifyServerUrl, gotifyAppToken, gotifyPriority, gotifyTitleTemplate, gotifyMessageTemplate,
-      ntfyEnabled, ntfyServerUrl, ntfyTopic, ntfyPriority, ntfyTitleTemplate, ntfyMessageTemplate,
+      ntfyEnabled, ntfyServerUrl, ntfyTopic, ntfyToken, ntfyTags, ntfyPriority, ntfyTitleTemplate, ntfyMessageTemplate,
+      shoutrrrEnabled, shoutrrrUrl, shoutrrrTitleTemplate, shoutrrrMessageTemplate,
       statusOnlyMode,
       webhookEnabled, webhookUrl, webhookMethod, webhookHeaders, webhookBodyTemplate, webhookContentType
     } = req.body;
@@ -3598,6 +3763,14 @@ app.post('/api/settings', async (req, res) => {
       updateFields.push('ntfy_priority = ?');
       params.push(ntfyPriority);
     }
+    if (ntfyToken !== undefined && ntfyToken !== '') {
+      updateFields.push('ntfy_token = ?');
+      params.push(ntfyToken);
+    }
+    if (ntfyTags !== undefined) {
+      updateFields.push('ntfy_tags = ?');
+      params.push(ntfyTags);
+    }
     if (ntfyTitleTemplate !== undefined) {
       updateFields.push('ntfy_title_template = ?');
       params.push(ntfyTitleTemplate);
@@ -3605,6 +3778,23 @@ app.post('/api/settings', async (req, res) => {
     if (ntfyMessageTemplate !== undefined) {
       updateFields.push('ntfy_message_template = ?');
       params.push(ntfyMessageTemplate);
+    }
+    // 添加 Shoutrrr 字段（如果提供了）
+    if (shoutrrrEnabled !== undefined) {
+      updateFields.push('shoutrrr_enabled = ?');
+      params.push(shoutrrrEnabled ? 1 : 0);
+    }
+    if (shoutrrrUrl !== undefined && shoutrrrUrl !== '') {
+      updateFields.push('shoutrrr_url = ?');
+      params.push(shoutrrrUrl);
+    }
+    if (shoutrrrTitleTemplate !== undefined) {
+      updateFields.push('shoutrrr_title_template = ?');
+      params.push(shoutrrrTitleTemplate);
+    }
+    if (shoutrrrMessageTemplate !== undefined) {
+      updateFields.push('shoutrrr_message_template = ?');
+      params.push(shoutrrrMessageTemplate);
     }
     // 添加仅状态模式字段（如果提供了）
     if (statusOnlyMode !== undefined) {
@@ -3684,6 +3874,10 @@ app.get('/api/settings', async (req, res) => {
     const hasGotifyToken = user.gotify_app_token && user.gotify_app_token.length > 0;
     // 检查是否已设置NTFY Topic（用于前端显示）
     const hasNtfyTopic = user.ntfy_topic && user.ntfy_topic.length > 0;
+    // 检查是否已设置NTFY Token（用于前端显示）
+    const hasNtfyToken = user.ntfy_token && user.ntfy_token.length > 0;
+    // 检查是否已设置Shoutrrr URL（用于前端显示）
+    const hasShoutrrrUrl = user.shoutrrr_url && user.shoutrrr_url.length > 0;
 
     return res.json({
       code: 0,
@@ -3705,9 +3899,15 @@ app.get('/api/settings', async (req, res) => {
         ntfyEnabled: user.ntfy_enabled === 1,
         ntfyServerUrl: user.ntfy_server_url || 'https://ntfy.sh',
         ntfyTopic: hasNtfyTopic ? '********' : '',  // 返回占位符表示已设置Topic
+        ntfyToken: hasNtfyToken ? '********' : '',  // 返回占位符表示已设置Token
+        ntfyTags: user.ntfy_tags || '',
         ntfyPriority: user.ntfy_priority || 3,
         ntfyTitleTemplate: user.ntfy_title_template || '[VRC-Notifier] {changeType}: {friendName}',
         ntfyMessageTemplate: user.ntfy_message_template || '好友 {friendName} {changeType}\n\n状态: {oldStatus} → {newStatus}\n世界: {newWorld}\n\n时间: {timestamp}',
+        shoutrrrEnabled: user.shoutrrr_enabled === 1,
+        shoutrrrUrl: hasShoutrrrUrl ? '********' : '',
+        shoutrrrTitleTemplate: user.shoutrrr_title_template || '[VRC-Notifier] {changeType}: {friendName}',
+        shoutrrrMessageTemplate: user.shoutrrr_message_template || '好友 {friendName} {changeType}\n\n状态: {oldStatus} → {newStatus}\n世界: {newWorld}\n\n时间: {timestamp}',
         statusOnlyMode: user.status_only_mode === 1,
         // 通用 Webhook 配置
         webhookEnabled: user.webhook_enabled === 1,
@@ -4097,24 +4297,26 @@ app.post('/api/test-ntfy', async (req, res) => {
     let serverUrl = ntfyServerUrl;
     let topic = ntfyTopic;
     let priority = ntfyPriority || 3;
+    let token = null;
+    let tags = null;
 
-    // 如果没有提供配置，从数据库获取
-    if (!serverUrl || !topic) {
-      const user = await new Promise((resolve, reject) => {
-        db.get('SELECT * FROM users WHERE vrchat_user_id = ?', [userId], (err, row) => {
-          if (err) reject(err);
-          else resolve(row);
-        });
+    // 从数据库获取用户信息（始终需要，因为可能需要 token 和 tags）
+    const user = await new Promise((resolve, reject) => {
+      db.get('SELECT * FROM users WHERE vrchat_user_id = ?', [userId], (err, row) => {
+        if (err) reject(err);
+        else resolve(row);
       });
+    });
 
-      if (!user) {
-        return res.json({ code: -1, msg: '用户不存在' });
-      }
-
-      serverUrl = serverUrl || user.ntfy_server_url;
-      topic = topic || user.ntfy_topic;
-      priority = ntfyPriority !== undefined ? ntfyPriority : (user.ntfy_priority || 3);
+    if (!user) {
+      return res.json({ code: -1, msg: '用户不存在' });
     }
+
+    serverUrl = serverUrl || user.ntfy_server_url;
+    topic = topic || user.ntfy_topic;
+    priority = ntfyPriority !== undefined ? ntfyPriority : (user.ntfy_priority || 3);
+    token = user.ntfy_token || null;
+    tags = user.ntfy_tags || null;
 
     if (!serverUrl || !topic) {
       return res.json({ code: -1, msg: '请先配置 NTFY 服务器地址和 Topic' });
@@ -4136,13 +4338,25 @@ app.post('/api/test-ntfy', async (req, res) => {
       console.log('[NTFY Test] Title:', testTitle, '(编码:', encodedTestTitle + ')');
       console.log('[NTFY Test] Message:', testMessage);
 
+      const headers = {
+        'Content-Type': 'text/plain',
+        'Title': encodedTestTitle,
+        'Priority': String(priority),
+        'Tags': 'test'
+      };
+
+      // 添加 Bearer Token 认证
+      if (token && token.trim() !== '') {
+        headers['Authorization'] = 'Bearer ' + token.trim();
+      }
+
+      // 添加用户自定义 tags（测试时追加到 'test' 后面）
+      if (tags && tags.trim() !== '') {
+        headers['Tags'] = 'test,' + tags.trim();
+      }
+
       const response = await axios.post(ntfyUrl, testMessage, {
-        headers: {
-          'Content-Type': 'text/plain',
-          'Title': encodedTestTitle,
-          'Priority': String(priority),
-          'Tags': 'test'
-        },
+        headers: headers,
         timeout: 10000
       });
 
@@ -4273,6 +4487,71 @@ app.post('/api/test-webhook', async (req, res) => {
     console.error('发送测试 Webhook 失败:', err.message);
     return res.json({ code: -1, msg: `发送测试 Webhook 失败: ${err.message}` });
   }
+});
+
+// 12.5 发送测试 Shoutrrr 推送
+app.post('/api/test-shoutrrr', async (req, res) => {
+  try {
+    const { userId, shoutrrrUrl } = req.body;
+
+    if (!userId) {
+      return res.json({ code: -1, msg: '未提供用户ID' });
+    }
+
+    let url = shoutrrrUrl;
+
+    if (!url) {
+      const user = await new Promise((resolve, reject) => {
+        db.get('SELECT * FROM users WHERE vrchat_user_id = ?', [userId], (err, row) => {
+          if (err) reject(err);
+          else resolve(row);
+        });
+      });
+
+      if (!user) {
+        return res.json({ code: -1, msg: '用户不存在' });
+      }
+
+      url = user.shoutrrr_url;
+    }
+
+    if (!url) {
+      return res.json({ code: -1, msg: '请先配置 Shoutrrr URL' });
+    }
+
+    const dateStr = formatDateSafe(new Date());
+    const testTitle = 'VRC-Notifier 测试推送';
+    const testMessage = '这是一条测试消息！\n\n如果您收到这条消息，说明 Shoutrrr 配置正确。\n\n时间: ' + dateStr;
+
+    console.log('[Shoutrrr Test] Sending to URL');
+
+    return new Promise((resolve) => {
+      execFile('shoutrrr', ['send', '--url', url, '--message', testMessage, '--title', testTitle], (error, stdout, stderr) => {
+        if (error) {
+          console.error('[Shoutrrr Test] CLI 执行失败:', error.message);
+          resolve(res.json({ code: -1, msg: `推送失败 (CLI 错误): ${error.message}` }));
+          return;
+        }
+
+        console.log(`[Shoutrrr Test] 成功`);
+        resolve(res.json({ code: 0, msg: '测试推送已发送，请检查您的接收端' }));
+      });
+    });
+  } catch (err) {
+    console.error('发送测试 Shoutrrr 推送异常:', err.message);
+    return res.json({ code: -1, msg: '发送失败: ' + err.message });
+  }
+});
+
+// 12.6 检查 Shoutrrr CLI 是否存在
+app.get('/api/check-shoutrrr', (req, res) => {
+  execFile('shoutrrr', ['--version'], (error, stdout, stderr) => {
+    if (error) {
+      console.error('[Check Shoutrrr] CLI 未找到:', error.message);
+      return res.json({ code: -1, msg: 'Shoutrrr CLI 未安装', installed: false });
+    }
+    return res.json({ code: 0, msg: 'Shoutrrr CLI 已安装', installed: true, version: stdout.trim() });
+  });
 });
 
 // 13. 发送测试邮件

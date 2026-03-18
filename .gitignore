@@ -3,7 +3,7 @@ node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-package-lock.json
+# package-lock.json
 
 # Runtime data
 pids
@@ -79,10 +79,11 @@ ehthumbs.db
 Thumbs.db
 
 # Docker
-Dockerfile
+# Dockerfile
 docker-compose.yml
 docker-compose.override.yml
 
 # Project specific
 .trae/
 AI_MEMORY.md
+data/

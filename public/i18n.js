@@ -62,6 +62,7 @@ const i18n = {
       'tab.ntfy': 'NTFY通知设置',
       'tab.qmsg': 'QQ推送设置',
       'tab.general': '设置与更新',
+      'tab.shoutrrr': 'Shoutrrr 推送设置',
       'tab.webhook': 'Webhook推送',
 
       // 公告栏
@@ -85,13 +86,13 @@ const i18n = {
       'statusOnly.toggle': '仅监控状态模式',
       'statusOnly.help': '了解仅监控状态模式',
       'statusOnly.hint.enabled': '已开启"仅监控状态"模式：将不再监控好友世界状态，但监控数量不受限制',
-      'statusOnly.hint.disabled': '如遇问题，可点击"退出并清除数据"按钮清除本地缓存后重新登录',
+      'statusOnly.hint.disabled': '如遇问题，可点击"退出并清除数据"清除本地缓存后重新登录',
 
       // 用户信息
       'user.status.unknown': '未知状态',
       'user.logout': '退出',
       'user.logoutClear': '退出并清除数据',
-      'user.clear.hint': '如遇问题，可点击"退出并清除数据"按钮清除本地缓存后重新登录',
+      'user.clear.hint': '如遇问题，可点击"退出并清除数据"清除本地缓存后重新登录',
 
       // 好友列表控制
       'friends.unmonitorAll': '全部关闭',
@@ -420,6 +421,12 @@ const i18n = {
       'ntfy.topic': 'Topic 主题',
       'ntfy.topic.placeholder': '输入您的 Topic 名称（如 my-vrc-notifier）',
       'ntfy.topic.hint': 'Topic 名称相当于频道，在 NTFY App 中订阅此 Topic 即可接收通知。建议使用不易猜测的名称。',
+      'ntfy.token': '认证 Token（可选）',
+      'ntfy.token.placeholder': 'Bearer Token（自建服务器可能需要）',
+      'ntfy.token.hint': '如果您的 NTFY 服务器启用了访问控制，请填写 Token。使用官方 ntfy.sh 无需填写。',
+      'ntfy.tags': '消息标签 Tags（可选）',
+      'ntfy.tags.placeholder': '例如: vrc,friend,notification',
+      'ntfy.tags.hint': '标签用于分类和过滤通知，多个标签用英文逗号分隔。支持 emoji 标签如 warning, bell 等。',
       'ntfy.priority': '消息优先级 (1-5)',
       'ntfy.priority.placeholder': '3',
       'ntfy.priority.hint': 'NTFY 优先级: 1=min, 2=low, 3=default, 4=high, 5=max。建议: 普通通知=3，重要通知=4-5',
@@ -481,10 +488,52 @@ const i18n = {
       // NTFY保存
       'ntfy.save': '保存 NTFY 设置',
       'ntfy.saved': 'NTFY 设置已保存',
-      'ntfy.saveFail': '保存失败',
+      'ntfy.testFail': '发送失败',
+
+      // Shoutrrr Settings
+      'shoutrrr.title': 'Shoutrrr 推送配置',
+      'shoutrrr.basic.title': '基础配置',
+      'shoutrrr.enable': '启用 Shoutrrr 推送',
+      'shoutrrr.enable.desc': '开启后，将通过 Shoutrrr 向您的设备发送好友状态变更通知。支持 Telegram, Discord, Slack 等数十种服务。',
+      'shoutrrr.server.title': '配置信息',
+      'shoutrrr.url': 'Shoutrrr URL',
+      'shoutrrr.url.placeholder': '例如: telegram://token@telegram?channels=channel-1',
+      'shoutrrr.url.hint': '查看 <a href="https://shoutrrr.nickfedor.com/services/overview/" target="_blank">Shoutrrr 官方文档</a> 获取支持的服务列表和 URL 格式。',
+
+      // Shoutrrr Template
+      'shoutrrr.template.title': 'Shoutrrr 推送模板 (可选)',
+      'shoutrrr.template.smart.title': '智能推送标题 (默认)',
+      'shoutrrr.template.smart.desc': '系统内置了智能标题生成，无需配置模板即可获得直观的标题：',
+      'shoutrrr.template.smart.online': '上线: FriendName 上线了',
+      'shoutrrr.template.smart.offline': '下线: FriendName 下线了',
+      'shoutrrr.template.smart.world': '世界变更: FriendName: OldWorld → NewWorld',
+      'shoutrrr.template.smart.status': '状态变更: FriendName: OldStatus → NewStatus',
+      'shoutrrr.template.smart.hint': '💡 建议：使用默认的智能标题，您可以直接看到最关键的变化内容。',
+      'shoutrrr.template.vars.title': '自定义模板变量 (高级)：',
+      'shoutrrr.template.var.friendName': '好友名称',
+      'shoutrrr.template.var.changeType': '变更类型',
+      'shoutrrr.template.var.oldStatus': '变更前状态',
+      'shoutrrr.template.var.newStatus': '变更后状态',
+      'shoutrrr.template.var.oldStatusDescription': '变更前自定义状态',
+      'shoutrrr.template.var.newStatusDescription': '变更后自定义状态',
+      'shoutrrr.template.var.oldWorld': '前一世界',
+      'shoutrrr.template.var.newWorld': '当前世界',
+      'shoutrrr.template.var.oldPlatform': '前一平台',
+      'shoutrrr.template.var.newPlatform': '当前平台',
+      'shoutrrr.template.var.timestamp': '变更时间',
+      'shoutrrr.template.custom.title': '自定义标题模板 (留空使用智能标题)',
+      'shoutrrr.template.custom.title.placeholder': '留空以默认生成智能标题',
+      'shoutrrr.template.custom.message': '自定义内容模板 (留空使用包含完整信息的默认模板)',
+      'shoutrrr.template.custom.message.placeholder': '留空以使用默认内容格式',
+
+      'shoutrrr.test': '发送测试推送',
+      'shoutrrr.check': '检查 CLI 状态',
+      'shoutrrr.testFail': '测试失败',
+      'shoutrrr.save': '保存设置',
+      'shoutrrr.saved': '已成功保存 Shoutrrr 配置',
+      'shoutrrr.saveFail': '保存配置失败',
 
       // Webhook设置
-      'tab.webhook': 'Webhook推送',
       'webhook.title': '通用 Webhook 推送配置',
       'webhook.basic.title': '基础配置',
       'webhook.enable': '启用 Webhook 推送',
@@ -600,6 +649,7 @@ const i18n = {
       'tab.ntfy': 'NTFY Settings',
       'tab.qmsg': 'QQ Push Settings',
       'tab.general': 'Settings & Update',
+      'tab.shoutrrr': 'Shoutrrr Settings',
       'tab.webhook': 'Webhook Push',
 
       // Announcement
@@ -814,7 +864,7 @@ const i18n = {
       'general.accessKey.current': 'Current Access Key (remember to save)',
       'general.accessKey.copy': 'Copy',
       'general.accessKey.regenerate': 'Regenerate',
-      'general.accessKey.warning': 'Warning: After regenerating the key, the previously saved key will become invalid and you will need to re-enter it!',
+      'general.accessKey.warning': 'Warning: After regenerating the key, the previous key will become invalid and you will need to re-enter it!',
       'general.update.title': 'Check for Updates',
       'general.update.desc': 'Check if a new version is available.',
       'general.update.btn': 'Check for Updates',
@@ -959,6 +1009,12 @@ const i18n = {
       'ntfy.topic': 'Topic Name',
       'ntfy.topic.placeholder': 'Enter your Topic name (e.g., my-vrc-notifier)',
       'ntfy.topic.hint': 'Topic name is like a channel, subscribe to this Topic in NTFY App to receive notifications. Use a hard-to-guess name.',
+      'ntfy.token': 'Auth Token (Optional)',
+      'ntfy.token.placeholder': 'Bearer Token (for self-hosted with auth)',
+      'ntfy.token.hint': 'If your NTFY server has access control enabled, enter the Token. Not needed for official ntfy.sh.',
+      'ntfy.tags': 'Message Tags (Optional)',
+      'ntfy.tags.placeholder': 'e.g., vrc,friend,notification',
+      'ntfy.tags.hint': 'Tags are used to categorize and filter notifications, comma-separated. Supports emoji tags like warning, bell.',
       'ntfy.priority': 'Message Priority (1-5)',
       'ntfy.priority.placeholder': '3',
       'ntfy.priority.hint': 'NTFY priority: 1=min, 2=low, 3=default, 4=high, 5=max. Suggested: Normal=3, Important=4-5',
@@ -1020,7 +1076,50 @@ const i18n = {
       // NTFY Save
       'ntfy.save': 'Save NTFY Settings',
       'ntfy.saved': 'NTFY settings saved',
-      'ntfy.saveFail': 'Failed to save',
+      'ntfy.testFail': 'Send failed',
+
+      // Shoutrrr Settings
+      'shoutrrr.title': 'Shoutrrr Push Notification Configuration',
+      'shoutrrr.basic.title': 'Basic Configuration',
+      'shoutrrr.enable': 'Enable Shoutrrr Push Notifications',
+      'shoutrrr.enable.desc': 'When enabled, notifications will be sent via Shoutrrr. Supports Telegram, Discord, Slack, and dozens of other services.',
+      'shoutrrr.server.title': 'Configuration',
+      'shoutrrr.url': 'Shoutrrr URL',
+      'shoutrrr.url.placeholder': 'e.g., telegram://token@telegram?channels=channel-1',
+      'shoutrrr.url.hint': 'Check <a href="https://shoutrrr.nickfedor.com/services/overview/" target="_blank">Shoutrrr Docs</a> for URL formats.',
+
+      // Shoutrrr Template
+      'shoutrrr.template.title': 'Shoutrrr Push Template (Optional)',
+      'shoutrrr.template.smart.title': 'Smart Push Title (Default)',
+      'shoutrrr.template.smart.desc': 'System has built-in smart title generation, no template configuration needed:',
+      'shoutrrr.template.smart.online': 'Online: FriendName is online',
+      'shoutrrr.template.smart.offline': 'Offline: FriendName is offline',
+      'shoutrrr.template.smart.world': 'World Change: FriendName: OldWorld → NewWorld',
+      'shoutrrr.template.smart.status': 'Status Change: FriendName: OldStatus → NewStatus',
+      'shoutrrr.template.smart.hint': '💡 Suggestion: Use default smart titles to see key changes directly.',
+      'shoutrrr.template.vars.title': 'Custom Template Variables (Advanced):',
+      'shoutrrr.template.var.friendName': 'Friend name',
+      'shoutrrr.template.var.changeType': 'Change type',
+      'shoutrrr.template.var.oldStatus': 'Status before change',
+      'shoutrrr.template.var.newStatus': 'Status after change',
+      'shoutrrr.template.var.oldStatusDescription': 'Custom status before change',
+      'shoutrrr.template.var.newStatusDescription': 'Custom status after change',
+      'shoutrrr.template.var.oldWorld': 'Previous world',
+      'shoutrrr.template.var.newWorld': 'Current world',
+      'shoutrrr.template.var.oldPlatform': 'Previous platform',
+      'shoutrrr.template.var.newPlatform': 'Current platform',
+      'shoutrrr.template.var.timestamp': 'Status change time',
+      'shoutrrr.template.custom.title': 'Custom Push Title Template (leave empty for smart title)',
+      'shoutrrr.template.custom.title.placeholder': 'Leave empty for smart title',
+      'shoutrrr.template.custom.message': 'Custom Push Content Template (leave empty for default content format)',
+      'shoutrrr.template.custom.message.placeholder': 'Leave empty for complete detailed info format',
+
+      'shoutrrr.test': 'Send Test Push',
+      'shoutrrr.check': 'Check CLI Status',
+      'shoutrrr.testFail': 'Test failed',
+      'shoutrrr.save': 'Save Settings',
+      'shoutrrr.saved': 'Shoutrrr settings saved',
+      'shoutrrr.saveFail': 'Failed to save',
 
       // Webhook Settings
       'tab.webhook': 'Webhook Push',
@@ -1141,6 +1240,13 @@ const i18n = {
       if (translation) {
         el.setAttribute('placeholder', translation);
       }
+    });
+
+    // 处理带 HTML 的翻译（仅当元素使用 data-i18n-html 时）
+    document.querySelectorAll('[data-i18n-html]').forEach(el => {
+      const key = el.getAttribute('data-i18n-html');
+      const translation = this.t(key);
+      if (translation) el.innerHTML = translation;
     });
 
     // 更新语言切换按钮显示

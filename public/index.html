@@ -1300,6 +1300,7 @@
         <button class="tab" data-tab="settings" data-i18n="tab.settings">SMTP设置</button>
         <button class="tab" data-tab="gotify" data-i18n="tab.gotify">Gotify通知设置</button>
         <button class="tab" data-tab="ntfy" data-i18n="tab.ntfy">NTFY通知设置</button>
+        <button class="tab" data-tab="shoutrrr" data-i18n="tab.shoutrrr">Shoutrrr推送</button>
         <button class="tab" data-tab="webhook" data-i18n="tab.webhook">Webhook推送</button>
         <button class="tab" data-tab="general" data-i18n="tab.general">设置与更新</button>
       </div>
@@ -1778,6 +1779,20 @@
               </p>
             </div>
             <div class="form-group">
+              <label data-i18n="ntfy.token">认证 Token（可选）</label>
+              <input type="password" id="ntfyToken" data-i18n-placeholder="ntfy.token.placeholder" placeholder="Bearer Token（自建服务器可能需要）">
+              <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;" data-i18n="ntfy.token.hint">
+                如果您的 NTFY 服务器启用了访问控制，请填写 Token。使用官方 ntfy.sh 无需填写。
+              </p>
+            </div>
+            <div class="form-group">
+              <label data-i18n="ntfy.tags">消息标签 Tags（可选）</label>
+              <input type="text" id="ntfyTags" data-i18n-placeholder="ntfy.tags.placeholder" placeholder="例如: vrc,friend,notification">
+              <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;" data-i18n="ntfy.tags.hint">
+                标签用于分类和过滤通知，多个标签用英文逗号分隔。支持 emoji 标签如 warning, bell 等。
+              </p>
+            </div>
+            <div class="form-group">
               <label data-i18n="ntfy.priority">消息优先级 (1-5)</label>
               <input type="number" id="ntfyPriority" placeholder="3" value="3" min="1" max="5">
               <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;" data-i18n="ntfy.priority.hint">
@@ -1887,6 +1902,92 @@
 
           <button id="saveNtfySettingsBtn" class="btn btn-success btn-block" style="margin-top: 1.5rem;">
             <span data-i18n="ntfy.save">保存 NTFY 设置</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Shoutrrr 推送设置 -->
+      <div id="shoutrrrTab" class="tab-content">
+        <div class="card">
+          <div class="card-title" data-i18n="shoutrrr.title">Shoutrrr 推送配置</div>
+          
+          <div class="settings-section">
+            <h4 data-i18n="shoutrrr.basic.title">基础配置</h4>
+            <div class="toggle-switch">
+              <label class="switch">
+                <input type="checkbox" id="shoutrrrEnabled">
+                <span class="slider"></span>
+              </label>
+              <div class="toggle-text">
+                <b data-i18n="shoutrrr.enable">启用 Shoutrrr 推送</b>
+                <p class="help-text" data-i18n="shoutrrr.enable.desc">开启后，将通过 Shoutrrr 向您的设备发送好友状态变更通知。支持几十种不同平台推送。</p>
+              </div>
+            </div>
+            
+            <div class="form-group" style="margin-top: 1.5rem;">
+              <h5 data-i18n="shoutrrr.server.title" style="margin: 0 0 0.5rem 0; color: var(--text-secondary);">配置信息</h5>
+              <label data-i18n="shoutrrr.url">Shoutrrr URL</label>
+              <input type="text" id="shoutrrrUrl" data-i18n-placeholder="shoutrrr.url.placeholder" placeholder="例如: telegram://token@telegram?channels=channel-1">
+              <p class="help-text" data-i18n-html="shoutrrr.url.hint">查看 <a href="https://shoutrrr.nickfedor.com/services/overview/" target="_blank">Shoutrrr 官方文档</a> 获取支持的服务列表和 URL 格式。</p>
+            </div>
+          </div>
+          
+          <!-- Shoutrrr 自定义模板设置 -->
+          <div class="settings-section" style="margin-top: 1.5rem; border-top: 1px dashed var(--border); padding-top: 1.5rem;">
+            <h4 data-i18n="shoutrrr.template.title" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="document.getElementById('shoutrrrTemplateConfig').style.display = document.getElementById('shoutrrrTemplateConfig').style.display === 'none' ? 'block' : 'none';">
+              <span>Shoutrrr 推送模板 (可选)</span>
+              <span style="font-size: 0.8rem; color: var(--accent);">展开/折叠 ▼</span>
+            </h4>
+            
+            <div id="shoutrrrTemplateConfig" style="display: none; margin-top: 1rem;">
+              <div class="template-help">
+                <h5 data-i18n="shoutrrr.template.smart.title">智能推送标题 (默认)</h5>
+                <p data-i18n="shoutrrr.template.smart.desc">系统内置了智能标题生成，无需配置模板即可获得直观的标题：</p>
+                <ul>
+                  <li data-i18n="shoutrrr.template.smart.online"><strong>上线:</strong> FriendName 上线了</li>
+                  <li data-i18n="shoutrrr.template.smart.offline"><strong>下线:</strong> FriendName 下线了</li>
+                  <li data-i18n="shoutrrr.template.smart.world"><strong>世界变更:</strong> FriendName: OldWorld → NewWorld</li>
+                  <li data-i18n="shoutrrr.template.smart.status"><strong>状态变更:</strong> FriendName: OldStatus → NewStatus</li>
+                </ul>
+                
+                <h5 style="margin-top: 1rem;" data-i18n="shoutrrr.template.vars.title">自定义模板可用变量 (高级用法)：</h5>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.85rem;">
+                  <div><code class="copyable" onclick="copyText('{friendName}')">{friendName}</code> - <span data-i18n="shoutrrr.template.var.friendName">好友名称</span></div>
+                  <div><code class="copyable" onclick="copyText('{changeType}')">{changeType}</code> - <span data-i18n="shoutrrr.template.var.changeType">变更类型</span></div>
+                  <div><code class="copyable" onclick="copyText('{oldStatus}')">{oldStatus}</code> - <span data-i18n="shoutrrr.template.var.oldStatus">变更前状态</span></div>
+                  <div><code class="copyable" onclick="copyText('{newStatus}')">{newStatus}</code> - <span data-i18n="shoutrrr.template.var.newStatus">变更后状态</span></div>
+                  <div><code class="copyable" onclick="copyText('{oldWorld}')">{oldWorld}</code> - <span data-i18n="shoutrrr.template.var.oldWorld">变更前世界</span></div>
+                  <div><code class="copyable" onclick="copyText('{newWorld}')">{newWorld}</code> - <span data-i18n="shoutrrr.template.var.newWorld">当前世界</span></div>
+                  <div><code class="copyable" onclick="copyText('{timestamp}')">{timestamp}</code> - <span data-i18n="shoutrrr.template.var.timestamp">变更时间</span></div>
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label data-i18n="shoutrrr.template.custom.title">自定义推送标题模板 (留空使用智能标题)</label>
+                <input type="text" id="shoutrrrTitleTemplate" data-i18n-placeholder="shoutrrr.template.custom.title.placeholder" placeholder="留空以使用智能标题: FriendName 上线了">
+              </div>
+              
+              <div class="form-group">
+                <label data-i18n="shoutrrr.template.custom.message">自定义推送内容模板 (留空使用包含所有信息的默认模板)</label>
+                <textarea id="shoutrrrMessageTemplate" rows="4" data-i18n-placeholder="shoutrrr.template.custom.message.placeholder" placeholder="留空使用默认内容格式，包含状态、世界等完整信息"></textarea>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-section" style="margin-top: 1.5rem; border-top: 1px dashed var(--border); padding-top: 1.5rem;">
+            <p id="shoutrrrStatus" style="font-size: 0.85rem; margin-bottom: 0.5rem; color: var(--text-muted);"></p>
+            <div style="display: flex; gap: 1rem;">
+              <button id="testShoutrrrBtn" class="btn btn-secondary" style="flex: 1;">
+                <span data-i18n="shoutrrr.test">发送测试推送</span>
+              </button>
+              <button id="checkShoutrrrBtn" class="btn btn-secondary" style="flex: 1;">
+                <span data-i18n="shoutrrr.check">检查 CLI 状态</span>
+              </button>
+            </div>
+          </div>
+
+          <button id="saveShoutrrrSettingsBtn" class="btn btn-success btn-block" style="margin-top: 1.5rem;">
+            <span data-i18n="shoutrrr.save">保存设置</span>
           </button>
         </div>
       </div>
@@ -2294,11 +2395,23 @@
     const ntfyEnabled = document.getElementById('ntfyEnabled');
     const ntfyServerUrl = document.getElementById('ntfyServerUrl');
     const ntfyTopic = document.getElementById('ntfyTopic');
+    const ntfyToken = document.getElementById('ntfyToken');
+    const ntfyTags = document.getElementById('ntfyTags');
     const ntfyPriority = document.getElementById('ntfyPriority');
     const ntfyTitleTemplate = document.getElementById('ntfyTitleTemplate');
     const ntfyMessageTemplate = document.getElementById('ntfyMessageTemplate');
-    const sendTestNtfyBtn = document.getElementById('sendTestNtfyBtn');
     const saveNtfySettingsBtn = document.getElementById('saveNtfySettingsBtn');
+    const sendTestNtfyBtn = document.getElementById('sendTestNtfyBtn');
+
+    // Shoutrrr 设置元素
+    const shoutrrrEnabled = document.getElementById('shoutrrrEnabled');
+    const shoutrrrUrl = document.getElementById('shoutrrrUrl');
+    const shoutrrrTitleTemplate = document.getElementById('shoutrrrTitleTemplate');
+    const shoutrrrMessageTemplate = document.getElementById('shoutrrrMessageTemplate');
+    const saveShoutrrrSettingsBtn = document.getElementById('saveShoutrrrSettingsBtn');
+    const testShoutrrrBtn = document.getElementById('testShoutrrrBtn');
+    const checkShoutrrrBtn = document.getElementById('checkShoutrrrBtn');
+    const shoutrrrStatus = document.getElementById('shoutrrrStatus');
 
     // Webhook 相关元素
     const webhookEnabled = document.getElementById('webhookEnabled');
@@ -4341,12 +4454,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (data.code === 0) {
           const settings = data.data;
-          ntfyEnabled.checked = settings.ntfyEnabled;
+          ntfyEnabled.checked = settings.ntfyEnabled || false;
           ntfyServerUrl.value = settings.ntfyServerUrl || 'https://ntfy.sh';
           ntfyTopic.value = settings.ntfyTopic || '';
+          ntfyToken.value = settings.ntfyToken || '';
+          ntfyTags.value = settings.ntfyTags || '';
           ntfyPriority.value = settings.ntfyPriority || 3;
-          ntfyTitleTemplate.value = settings.ntfyTitleTemplate || '';
-          ntfyMessageTemplate.value = settings.ntfyMessageTemplate || '';
+          ntfyTitleTemplate.value = settings.ntfyTitleTemplate || '[VRC-Notifier] {changeType}: {friendName}';
+          ntfyMessageTemplate.value = settings.ntfyMessageTemplate || '好友 {friendName} {changeType}\n\n状态: {oldStatus} → {newStatus}\n世界: {newWorld}\n\n时间: {timestamp}';
           updateNtfyPreview();
         }
       } catch (err) {
@@ -4432,6 +4547,7 @@ ${timestamp}`;
         userId: currentUserId,
         ntfyEnabled: ntfyEnabled.checked,
         ntfyServerUrl: ntfyServerUrl.value.trim() || 'https://ntfy.sh',
+        ntfyTags: ntfyTags.value.trim(),
         ntfyPriority: parseInt(ntfyPriority.value) || 3,
         ntfyTitleTemplate: ntfyTitleTemplate.value.trim(),
         ntfyMessageTemplate: ntfyMessageTemplate.value.trim()
@@ -4441,6 +4557,12 @@ ${timestamp}`;
       const topicValue = ntfyTopic.value.trim();
       if (topicValue && topicValue !== '' && !topicValue.includes('*')) {
         settings.ntfyTopic = topicValue;
+      }
+      
+      // 只有当用户输入了新的 Token（不是占位符）时才保存
+      const tokenValue = ntfyToken.value.trim();
+      if (tokenValue && tokenValue !== '' && !tokenValue.includes('*')) {
+        settings.ntfyToken = tokenValue;
       }
 
       saveNtfySettingsBtn.disabled = true;
@@ -4463,6 +4585,7 @@ ${timestamp}`;
     sendTestNtfyBtn.addEventListener('click', async () => {
       const serverUrl = ntfyServerUrl.value.trim() || 'https://ntfy.sh';
       let topic = ntfyTopic.value.trim();
+      let token = ntfyToken.value.trim();
       const priority = parseInt(ntfyPriority.value) || 3;
 
       // 如果主题是掩码（表示已配置但隐藏），不传入主题，让服务器从数据库读取
@@ -4471,6 +4594,12 @@ ${timestamp}`;
       let topicToSend = topic;
       if (topic === '********' || topic === '') {
         topicToSend = null; // 让服务器从数据库读取真实主题
+      }
+      
+      // Token处理同上
+      let tokenToSend = token;
+      if (token === '********' || token === '') {
+        tokenToSend = null; 
       }
 
       sendTestNtfyBtn.disabled = true;
@@ -4482,6 +4611,7 @@ ${timestamp}`;
             userId: currentUserId,
             ntfyServerUrl: serverUrl,
             ntfyTopic: topicToSend,
+            ntfyToken: tokenToSend,
             ntfyPriority: priority
           })
         });
@@ -4491,6 +4621,103 @@ ${timestamp}`;
         alert('[X] ' + i18n.t('ntfy.test.fail') + ': ' + err.message);
       } finally {
         sendTestNtfyBtn.disabled = false;
+      }
+    });
+
+    // 加载 Shoutrrr 设置
+    async function loadShoutrrrSettings() {
+      if (!currentUserId) return;
+      try {
+        const res = await fetch(`${API_BASE}/settings`, {
+          headers: { 'X-User-Id': currentUserId }
+        });
+        const data = await res.json();
+
+        if (data.code === 0) {
+          const settings = data.data;
+          shoutrrrEnabled.checked = settings.shoutrrrEnabled || false;
+          shoutrrrUrl.value = settings.shoutrrrUrl || '';
+          shoutrrrTitleTemplate.value = settings.shoutrrrTitleTemplate || '[VRC-Notifier] {changeType}: {friendName}';
+          shoutrrrMessageTemplate.value = settings.shoutrrrMessageTemplate || '好友 {friendName} {changeType}\\n\\n状态: {oldStatus} → {newStatus}\\n世界: {newWorld}\\n\\n时间: {timestamp}';
+        }
+      } catch (err) {
+        console.error('加载 Shoutrrr 设置失败:', err);
+      }
+    }
+
+    // 保存 Shoutrrr 设置
+    saveShoutrrrSettingsBtn.addEventListener('click', async () => {
+      const settings = {
+        userId: currentUserId,
+        shoutrrrEnabled: shoutrrrEnabled.checked,
+        shoutrrrTitleTemplate: shoutrrrTitleTemplate.value.trim(),
+        shoutrrrMessageTemplate: shoutrrrMessageTemplate.value.trim()
+      };
+
+      const urlValue = shoutrrrUrl.value.trim();
+      if (urlValue && urlValue !== '' && !urlValue.includes('*')) {
+        settings.shoutrrrUrl = urlValue;
+      }
+
+      saveShoutrrrSettingsBtn.disabled = true;
+      try {
+        const res = await fetch(`${API_BASE}/settings`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(settings)
+        });
+        const data = await res.json();
+        alert(data.code === 0 ? i18n.t('shoutrrr.saved') : i18n.t('shoutrrr.saveFail') + ': ' + data.msg);
+      } catch (err) {
+        alert(i18n.t('shoutrrr.saveFail') + ': ' + err.message);
+      } finally {
+        saveShoutrrrSettingsBtn.disabled = false;
+      }
+    });
+
+    // 发送验证/测试请求
+    testShoutrrrBtn.addEventListener('click', async () => {
+      let url = shoutrrrUrl.value.trim();
+
+      if (url === '********' || url === '') {
+        url = null;
+      }
+
+      testShoutrrrBtn.disabled = true;
+      try {
+        const res = await fetch(`${API_BASE}/test-shoutrrr`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: currentUserId, shoutrrrUrl: url })
+        });
+        const data = await res.json();
+        alert(data.msg);
+      } catch (err) {
+        alert(i18n.t('shoutrrr.testFail') + ': ' + err.message);
+      } finally {
+        testShoutrrrBtn.disabled = false;
+      }
+    });
+
+    // 检查 CLI 是否工作
+    checkShoutrrrBtn.addEventListener('click', async () => {
+      checkShoutrrrBtn.disabled = true;
+      shoutrrrStatus.innerText = '正在检查...';
+      try {
+        const res = await fetch(`${API_BASE}/check-shoutrrr`);
+        const data = await res.json();
+        if (data.code === 0) {
+          shoutrrrStatus.innerText = `[OK] ` + data.version;
+          shoutrrrStatus.style.color = 'var(--accent)';
+        } else {
+          shoutrrrStatus.innerText = `[Error] ` + data.msg;
+          shoutrrrStatus.style.color = '#ef4444';
+        }
+      } catch (err) {
+        shoutrrrStatus.innerText = `[Error] ` + err.message;
+        shoutrrrStatus.style.color = '#ef4444';
+      } finally {
+        checkShoutrrrBtn.disabled = false;
       }
     });
 
@@ -4613,6 +4840,7 @@ ${timestamp}`;
         if (tab.dataset.tab === 'settings') loadSettings();
         if (tab.dataset.tab === 'gotify') loadGotifySettings();
         if (tab.dataset.tab === 'ntfy') loadNtfySettings();
+        if (tab.dataset.tab === 'shoutrrr') loadShoutrrrSettings();
         if (tab.dataset.tab === 'webhook') loadGotifySettings(); // Webhook 和 Gotify 共用设置加载
       });
     });

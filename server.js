@@ -4425,6 +4425,17 @@ app.post('/api/access-key-settings', async (req, res) => {
   const { enabled, accessKey } = req.body;
   
   try {
+    if (Object.prototype.hasOwnProperty.call(req.body, 'accessKey')) {
+      const normalizedAccessKey = typeof accessKey === 'string' ? accessKey.trim() : '';
+      if (!normalizedAccessKey) {
+        return res.json({ code: -1, msg: '访问密钥不能为空' });
+      }
+      if (normalizedAccessKey.length < 8 || normalizedAccessKey.length > 128) {
+        return res.json({ code: -1, msg: '访问密钥长度需为8-128个字符' });
+      }
+      req.body.accessKey = normalizedAccessKey;
+    }
+
     // 更新启用状态
     await new Promise((resolve, reject) => {
       db.run(
@@ -4438,11 +4449,11 @@ app.post('/api/access-key-settings', async (req, res) => {
     });
 
     // 如果提供了新密钥，更新密钥
-    if (accessKey) {
+    if (Object.prototype.hasOwnProperty.call(req.body, 'accessKey')) {
       await new Promise((resolve, reject) => {
         db.run(
           'INSERT INTO system_settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value',
-          ['access_key', accessKey],
+          ['access_key', req.body.accessKey],
           (err) => {
             if (err) reject(err);
             else resolve();

@@ -2045,13 +2045,13 @@
               <div class="form-group">
                 <label data-i18n="general.accessKey.current">当前访问密钥（记得保存）</label>
                 <div style="display: flex; gap: 0.5rem;">
-                  <input type="text" id="currentAccessKey" readonly style="flex: 1; font-family: monospace;">
+                  <input type="text" id="currentAccessKey" style="flex: 1; font-family: monospace;">
                   <button id="copyAccessKeyBtn" class="btn btn-secondary" style="width: auto; padding: 0.75rem 1rem;" data-i18n="general.accessKey.copy">复制</button>
-                  <button id="regenerateAccessKeyBtn" class="btn btn-secondary" style="width: auto; padding: 0.75rem 1rem;" data-i18n="general.accessKey.regenerate">重新生成</button>
+                  <button id="regenerateAccessKeyBtn" class="btn btn-secondary" style="width: auto; padding: 0.75rem 1rem;" data-i18n="general.accessKey.regenerate">保存</button>
                 </div>
               </div>
               <p style="font-size: 0.8rem; color: #ef4444; margin-top: 0.5rem;" data-i18n="general.accessKey.warning">
-                警告：重新生成密钥后，之前保存的密钥将失效，需要重新输入！
+                提示：修改密钥后，之前保存的密钥将失效，需要使用新密钥重新输入！
               </p>
             </div>
           </div>
@@ -2740,6 +2740,25 @@
       }
     }
 
+    // 强制重新验证访问密钥（不影响 VRChat 登录会话）
+    function forceAccessKeyReverify(message = '') {
+      localStorage.removeItem('vrc_access_key');
+      accessKeyCard.classList.remove('hidden');
+      loginCard.classList.add('hidden');
+      mainPanel.classList.add('hidden');
+      disconnectEventStream();
+
+      const accessKeyInput = document.getElementById('accessKeyInput');
+      if (accessKeyInput) {
+        accessKeyInput.value = '';
+        accessKeyInput.focus();
+      }
+
+      if (message) {
+        showAlert(accessKeyAlert, 'info', message);
+      }
+    }
+
     // 检查访问密钥状态
     async function checkAccessKeyStatus() {
       try {
@@ -2788,15 +2807,51 @@
                   loginCard.classList.remove('hidden');
                 }
               } else {
-                // 密钥无效，清除并显示密钥输入
-                localStorage.removeItem('vrc_access_key');
+                // 密钥无效，强制回到访问密钥验证界面
+                forceAccessKeyReverify();
               }
+            } else {
+              // 未验证过访问密钥，强制显示验证界面
+              forceAccessKeyReverify();
             }
-            // 否则保持访问密钥输入界面显示
           }
         }
       } catch (err) {
         console.error('检查访问密钥状态失败:', err);
+      }
+    }
+
+    // 启动前访问密钥预校验（用于阻断自动登录绕过）
+    async function precheckAccessKeyForStartup() {
+      try {
+        const statusRes = await fetch(`${API_BASE}/access-key-status`);
+        const statusData = await statusRes.json();
+
+        if (statusData.code !== 0 || !statusData.data.enabled) {
+          return true;
+        }
+
+        const savedAccessKey = localStorage.getItem('vrc_access_key');
+        if (!savedAccessKey) {
+          return false;
+        }
+
+        const verifyRes = await fetch(`${API_BASE}/verify-access-key`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ accessKey: savedAccessKey })
+        });
+        const verifyData = await verifyRes.json();
+
+        if (verifyData.code !== 0) {
+          localStorage.removeItem('vrc_access_key');
+          return false;
+        }
+
+        return true;
+      } catch (err) {
+        console.error('启动前访问密钥预校验失败:', err);
+        return false;
       }
     }
 
@@ -2844,6 +2899,12 @@
 
     // 初始化
 document.addEventListener('DOMContentLoaded', async () => {
+  const accessKeyReady = await precheckAccessKeyForStartup();
+  if (!accessKeyReady) {
+    forceAccessKeyReverify();
+    return;
+  }
+
   // 首先尝试自动登录
   const savedUserId = localStorage.getItem('vrc_user_id');
   const rememberMe = localStorage.getItem('vrc_remember_me');
@@ -4024,31 +4085,39 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 复制访问密钥
     document.getElementById('copyAccessKeyBtn').addEventListener('click', () => {
       const keyInput = document.getElementById('currentAccessKey');
+      if (!keyInput.value.trim()) {
+        alert(i18n.t('settings.accessKey.empty'));
+        return;
+      }
       keyInput.select();
       document.execCommand('copy');
       alert(i18n.t('settings.accessKey.copied'));
     });
 
-    // 重新生成访问密钥
+    // 保存访问密钥
     document.getElementById('regenerateAccessKeyBtn').addEventListener('click', async () => {
+      const keyInput = document.getElementById('currentAccessKey');
+      const newKey = keyInput.value.trim();
+      if (!newKey) {
+        alert(i18n.t('settings.accessKey.empty'));
+        return;
+      }
+
       if (!confirm(i18n.t('settings.accessKey.warning'))) return;
 
-      // 生成新密钥
-      const newKey = Array.from(crypto.getRandomValues(new Uint8Array(32)))
-        .map(b => b.toString(16).padStart(2, '0').toUpperCase())
-        .join('');
-
       try {
+        const enabled = document.getElementById('accessKeyEnabled').checked;
         const res = await fetch(`${API_BASE}/access-key-settings`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ enabled: true, accessKey: newKey })
+          body: JSON.stringify({ enabled, accessKey: newKey })
         });
         const data = await res.json();
 
         if (data.code === 0) {
-          document.getElementById('currentAccessKey').value = newKey;
-          alert(i18n.t('settings.accessKey.warning'));
+          keyInput.value = newKey;
+          alert(i18n.t('settings.saved'));
+          forceAccessKeyReverify(i18n.t('settings.accessKey.reverify'));
         } else {
           alert(i18n.t('settings.saveFail') + ': ' + data.msg);
         }

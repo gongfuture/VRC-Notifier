@@ -337,8 +337,42 @@ async function initAccessKey() {
         else resolve();
       });
     });
+
+    const initialVersion = Date.now().toString();
+    await new Promise((resolve, reject) => {
+      db.run(
+        'INSERT INTO system_settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value',
+        ['access_key_version', initialVersion],
+        (err) => {
+          if (err) reject(err);
+          else resolve();
+        }
+      );
+    });
+
     return newKey;
   }
+
+  const accessKeyVersion = await new Promise((resolve, reject) => {
+    db.get('SELECT value FROM system_settings WHERE key = ?', ['access_key_version'], (err, row) => {
+      if (err) reject(err);
+      else resolve(row ? row.value : null);
+    });
+  });
+
+  if (!accessKeyVersion) {
+    await new Promise((resolve, reject) => {
+      db.run(
+        'INSERT INTO system_settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value',
+        ['access_key_version', Date.now().toString()],
+        (err) => {
+          if (err) reject(err);
+          else resolve();
+        }
+      );
+    });
+  }
+
   return accessKey;
 }
 
@@ -4381,12 +4415,19 @@ app.post('/api/verify-access-key', async (req, res) => {
       });
     });
 
+    const accessKeyVersion = await new Promise((resolve, reject) => {
+      db.get('SELECT value FROM system_settings WHERE key = ?', ['access_key_version'], (err, row) => {
+        if (err) reject(err);
+        else resolve(row ? row.value : '');
+      });
+    });
+
     if (!storedKey) {
       return res.json({ code: -1, msg: '访问密钥未配置' });
     }
 
     if (accessKey === storedKey) {
-      return res.json({ code: 0, msg: '验证成功', data: { required: true } });
+      return res.json({ code: 0, msg: '验证成功', data: { required: true, accessKeyVersion } });
     } else {
       return res.json({ code: -1, msg: '访问密钥错误' });
     }
@@ -4406,12 +4447,19 @@ app.get('/api/access-key-status', async (req, res) => {
         else resolve(row ? row.value : null);
       });
     });
+    const accessKeyVersion = await new Promise((resolve, reject) => {
+      db.get('SELECT value FROM system_settings WHERE key = ?', ['access_key_version'], (err, row) => {
+        if (err) reject(err);
+        else resolve(row ? row.value : '');
+      });
+    });
     
     return res.json({ 
       code: 0, 
       data: { 
         enabled, 
-        accessKey: accessKey || '' 
+        accessKey: accessKey || '',
+        accessKeyVersion
       } 
     });
   } catch (err) {
@@ -4454,6 +4502,17 @@ app.post('/api/access-key-settings', async (req, res) => {
         db.run(
           'INSERT INTO system_settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value',
           ['access_key', req.body.accessKey],
+          (err) => {
+            if (err) reject(err);
+            else resolve();
+          }
+        );
+      });
+
+      await new Promise((resolve, reject) => {
+        db.run(
+          'INSERT INTO system_settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value',
+          ['access_key_version', Date.now().toString()],
           (err) => {
             if (err) reject(err);
             else resolve();

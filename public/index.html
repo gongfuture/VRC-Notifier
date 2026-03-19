@@ -2246,6 +2246,9 @@
   <script>
     // API 基础地址
     const API_BASE = window.location.origin + '/api';
+    const ACCESS_KEY_STORAGE_KEY = 'vrc_access_key';
+    const ACCESS_KEY_VERSION_STORAGE_KEY = 'vrc_access_key_version';
+    const ACCESS_KEY_VERSION_CHECK_INTERVAL = 30000;
 
     // 全局状态
     let currentUserId = localStorage.getItem('vrc_user_id');
@@ -2256,6 +2259,7 @@
     let currentEditingFriend = null;
     let isListView = false;
     let currentFriends = [];
+    let accessKeyVersionCheckTimer = null;
 
     // DOM 元素
     const accessKeyCard = document.getElementById('accessKeyCard');
@@ -2740,9 +2744,58 @@
       }
     }
 
+    function setVerifiedAccessKeyVersion(version) {
+      if (version) {
+        localStorage.setItem(ACCESS_KEY_VERSION_STORAGE_KEY, version);
+      }
+    }
+
+    function clearVerifiedAccessKeyState() {
+      localStorage.removeItem(ACCESS_KEY_STORAGE_KEY);
+      localStorage.removeItem(ACCESS_KEY_VERSION_STORAGE_KEY);
+    }
+
+    function stopAccessKeyVersionWatcher() {
+      if (accessKeyVersionCheckTimer) {
+        clearInterval(accessKeyVersionCheckTimer);
+        accessKeyVersionCheckTimer = null;
+      }
+    }
+
+    function startAccessKeyVersionWatcher() {
+      stopAccessKeyVersionWatcher();
+      accessKeyVersionCheckTimer = setInterval(async () => {
+        try {
+          const savedAccessKey = localStorage.getItem(ACCESS_KEY_STORAGE_KEY);
+          if (!savedAccessKey) {
+            return;
+          }
+
+          const localVersion = localStorage.getItem(ACCESS_KEY_VERSION_STORAGE_KEY);
+          if (!localVersion) {
+            return;
+          }
+
+          const res = await fetch(`${API_BASE}/access-key-status`);
+          const data = await res.json();
+          if (data.code !== 0 || !data.data.enabled) {
+            return;
+          }
+
+          const remoteVersion = data.data.accessKeyVersion || '';
+          if (remoteVersion && remoteVersion !== localVersion) {
+            forceAccessKeyReverify(i18n.t('settings.accessKey.reverify'));
+          }
+        } catch (err) {
+          console.error('访问密钥版本检测失败:', err);
+        }
+      }, ACCESS_KEY_VERSION_CHECK_INTERVAL);
+    }
+
     // 强制重新验证访问密钥（不影响 VRChat 登录会话）
     function forceAccessKeyReverify(message = '') {
-      localStorage.removeItem('vrc_access_key');
+      clearVerifiedAccessKeyState();
+      stopAccessKeyVersionWatcher();
       accessKeyCard.classList.remove('hidden');
       loginCard.classList.add('hidden');
       mainPanel.classList.add('hidden');
@@ -2769,6 +2822,7 @@
           if (!data.data.enabled) {
             // 访问密钥已禁用
             accessKeyCard.classList.add('hidden');
+            stopAccessKeyVersionWatcher();
             if (currentUserId) {
               // 已登录，显示主面板
               showMainPanel();
@@ -2782,7 +2836,7 @@
             }
           } else {
             // 访问密钥已启用，检查本地存储
-            const savedAccessKey = localStorage.getItem('vrc_access_key');
+            const savedAccessKey = localStorage.getItem(ACCESS_KEY_STORAGE_KEY);
             if (savedAccessKey) {
               // 验证保存的密钥
               const verifyRes = await fetch(`${API_BASE}/verify-access-key`, {
@@ -2793,6 +2847,9 @@
               const verifyData = await verifyRes.json();
 
               if (verifyData.code === 0) {
+                const verifiedVersion = verifyData.data?.accessKeyVersion || data.data.accessKeyVersion;
+                setVerifiedAccessKeyVersion(verifiedVersion);
+                startAccessKeyVersionWatcher();
                 // 密钥有效
                 accessKeyCard.classList.add('hidden');
                 if (currentUserId) {
@@ -2831,7 +2888,7 @@
           return true;
         }
 
-        const savedAccessKey = localStorage.getItem('vrc_access_key');
+        const savedAccessKey = localStorage.getItem(ACCESS_KEY_STORAGE_KEY);
         if (!savedAccessKey) {
           return false;
         }
@@ -2844,9 +2901,12 @@
         const verifyData = await verifyRes.json();
 
         if (verifyData.code !== 0) {
-          localStorage.removeItem('vrc_access_key');
+          clearVerifiedAccessKeyState();
           return false;
         }
+
+        const verifiedVersion = verifyData.data?.accessKeyVersion || statusData.data.accessKeyVersion;
+        setVerifiedAccessKeyVersion(verifiedVersion);
 
         return true;
       } catch (err) {
@@ -2874,7 +2934,9 @@
 
         if (data.code === 0) {
           // 保存密钥到本地
-          localStorage.setItem('vrc_access_key', accessKey);
+          localStorage.setItem(ACCESS_KEY_STORAGE_KEY, accessKey);
+          setVerifiedAccessKeyVersion(data.data?.accessKeyVersion);
+          startAccessKeyVersionWatcher();
           showAlert(accessKeyAlert, 'success', i18n.t('access.verify.success'));
           
           // 切换到登录界面
@@ -3077,6 +3139,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     function showMainPanel() {
       loginCard.classList.add('hidden');
       mainPanel.classList.remove('hidden');
+      startAccessKeyVersionWatcher();
 
       // 显示公告栏（登录后）
       const announcementBanner = document.getElementById('announcementBanner');
@@ -3095,6 +3158,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 显示登录卡片
     function showLoginCard() {
+      stopAccessKeyVersionWatcher();
       loginCard.classList.remove('hidden');
       mainPanel.classList.add('hidden');
       currentUserId = null;
